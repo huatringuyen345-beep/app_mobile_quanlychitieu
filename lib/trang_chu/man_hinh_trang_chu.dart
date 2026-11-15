@@ -808,7 +808,10 @@ class _BangGhiChiState extends State<_BangGhiChi>
                     ),
                     child: TextField(
                       controller: _ctl,
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: false,
+                        signed: false,
+                      ),
                       inputFormatters: [DinhDangTienInputFormatter()],
                       style: TextStyle(
                         fontSize: 26,

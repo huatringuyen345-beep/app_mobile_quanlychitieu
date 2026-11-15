@@ -127,7 +127,10 @@ class _ManHinhThemGiaoDichState extends State<ManHinhThemGiaoDich> {
                       Expanded(
                         child: TextField(
                           controller: _soTienController,
-                          keyboardType: TextInputType.number,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: false,
+                            signed: false,
+                          ),
                           inputFormatters: [DinhDangTienInputFormatter()],
                           style: TextStyle(
                             fontSize: 30,

@@ -200,7 +200,10 @@ class _ManHinhNganSachState extends State<ManHinhNganSach> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: hanMucController,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: false,
+                      signed: false,
+                    ),
                     inputFormatters: [DinhDangTienInputFormatter()],
                     style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                     decoration: InputDecoration(
