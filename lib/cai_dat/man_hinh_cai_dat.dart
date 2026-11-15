@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../dich_vu/quan_ly_trang_thai_app.dart';
 import '../dich_vu/dich_vu_luu_tru.dart';
 
 class ManHinhCaiDat extends StatefulWidget {
@@ -115,6 +116,10 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
                       onPressed: () async {
                         Navigator.pop(dialogContext);
                         await DichVuLuuTru.xoaDangXuat();
+                        // Xóa sạch dữ liệu đang hiển thị: người sau đăng nhập sẽ thấy 0đ
+                        if (mounted) {
+                          await QuanLyTrangThaiScope.of(context).dangXuat();
+                        }
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -421,9 +426,9 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
       ),
       subtitle: moTa != null
           ? Text(
-              moTa,
-              style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
-            )
+        moTa,
+        style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
+      )
           : null,
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
       onTap: onTap,

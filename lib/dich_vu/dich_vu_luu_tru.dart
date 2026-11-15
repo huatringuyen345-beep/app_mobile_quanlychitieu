@@ -5,6 +5,22 @@ class DichVuLuuTru {
   static const String _keyEmail = 'email_nguoi_dung';
   static const String _keyHoTen = 'ho_ten_nguoi_dung';
   static const String _keyGiaoDienToi = 'giao_dien_toi';
+  static const String _keyNguoiDungHienTai = 'nguoi_dung_hien_tai';
+
+  // Tài khoản đang dùng dữ liệu (kể cả khi không tick "Ghi nhớ đăng nhập")
+  static Future<void> luuNguoiDungHienTai(String? email) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (email == null || email.isEmpty) {
+      await prefs.remove(_keyNguoiDungHienTai);
+    } else {
+      await prefs.setString(_keyNguoiDungHienTai, email);
+    }
+  }
+
+  static Future<String?> layNguoiDungHienTai() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyNguoiDungHienTai);
+  }
 
   // Lưu trạng thái sau khi đăng nhập thành công
   static Future<void> luuDangNhap({

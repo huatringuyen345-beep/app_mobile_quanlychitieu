@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:rive/rive.dart' hide Image, LinearGradient;
 import '../dich_vu/dich_vu_luu_tru.dart';
 import '../dich_vu/dich_vu_mang.dart';
+import '../dich_vu/quan_ly_trang_thai_app.dart';
 
 class ManHinhDangNhap extends StatefulWidget {
   final VoidCallback? chuyenToiDangKy;
@@ -60,6 +61,11 @@ class _ManHinhDangNhapState extends State<ManHinhDangNhap> {
         }
         return;
       }
+
+      // Mở dữ liệu riêng của tài khoản này (tài khoản mới = 0đ)
+      if (!mounted) return;
+      await QuanLyTrangThaiScope.of(context)
+          .chuyenNguoiDung(_emailController.text.trim());
 
       if (_ghiNhoDangNhap) {
         await DichVuLuuTru.luuDangNhap(

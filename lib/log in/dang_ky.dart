@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart' hide Image, LinearGradient;
 import '../dich_vu/dich_vu_luu_tru.dart';
+import '../dich_vu/quan_ly_trang_thai_app.dart';
 import '../dich_vu/dich_vu_mang.dart';
 
 class ManHinhDangKy extends StatefulWidget {
@@ -76,6 +77,10 @@ class _ManHinhDangKyState extends State<ManHinhDangKy> {
         }
         return;
       }
+
+      if (!mounted) return;
+      await QuanLyTrangThaiScope.of(context)
+          .chuyenNguoiDung(_emailController.text.trim());
 
       await DichVuLuuTru.luuDangNhap(
         email: _emailController.text.trim(),
@@ -444,15 +449,15 @@ class _ManHinhDangKyState extends State<ManHinhDangKy> {
             prefixIcon: Icon(icon, color: mauChinh, size: 20),
             suffixIcon: isPassword
                 ? IconButton(
-                    icon: Icon(
-                      obscureText
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: Colors.grey.shade600,
-                      size: 20,
-                    ),
-                    onPressed: onTogglePassword,
-                  )
+              icon: Icon(
+                obscureText
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                color: Colors.grey.shade600,
+                size: 20,
+              ),
+              onPressed: onTogglePassword,
+            )
                 : null,
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.92),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../mo_hinh/mo_hinh_giao_dich.dart';
 import 'dich_vu_csdl.dart';
+import 'dich_vu_luu_tru.dart';
 import 'dich_vu_firebase.dart';
 
 class QuanLyTrangThaiApp extends ChangeNotifier {
@@ -29,8 +30,32 @@ class QuanLyTrangThaiApp extends ChangeNotifier {
   double get tongSoDu => tongThuNhap - tongChiTieu;
 
   QuanLyTrangThaiApp() {
-    taiDuLieuTuCSDL();
+    _khoiTao();
   }
+
+  Future<void> _khoiTao() async {
+    // Mở đúng CSDL của tài khoản đang đăng nhập lần trước (nếu có)
+    await DichVuCSDL.datNguoiDung(await DichVuLuuTru.layNguoiDungHienTai());
+    await taiDuLieuTuCSDL();
+  }
+
+  /// Gọi khi đăng nhập / đăng ký: chuyển sang dữ liệu riêng của [email].
+  Future<void> chuyenNguoiDung(String? email) async {
+    final String? e = (email == null || email.trim().isEmpty)
+        ? null
+        : email.trim().toLowerCase();
+    // Xóa sạch dữ liệu trên màn hình ngay lập tức -> mọi số về 0
+    _danhSachGiaoDich = [];
+    _danhSachDanhMuc = [];
+    _danhSachNganSach = [];
+    notifyListeners();
+    await DichVuLuuTru.luuNguoiDungHienTai(e);
+    await DichVuCSDL.datNguoiDung(e);
+    await taiDuLieuTuCSDL();
+  }
+
+  /// Gọi khi đăng xuất: về trạng thái khách, dữ liệu người trước biến mất khỏi app.
+  Future<void> dangXuat() => chuyenNguoiDung(null);
 
   Future<void> taiDuLieuTuCSDL() async {
     _dangTai = true;

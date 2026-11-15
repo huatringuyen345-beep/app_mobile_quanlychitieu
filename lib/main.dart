@@ -127,6 +127,7 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
       switch (_viTriTab) {
         case 0:
           noiDung = ManHinhTrangChu(
+        //noiDung = ManHinhSauHu(
             chuyenToiDanhSachGiaoDich: () {
               setState(() {
                 _viTriTab = 1;
@@ -259,6 +260,7 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
     switch (index) {
       case 0:
         return ManHinhKhoiDau(
+        //return ManHinhSauHu(
           thoiGianChoGiay: 10,
           khiHoanThanh: () => setState(() => _viTriManHinhDocLap = -1),
         );

@@ -6,11 +6,28 @@ import 'package:sqflite/sqflite.dart';
 import '../mo_hinh/mo_hinh_giao_dich.dart';
 
 class DichVuCSDL {
-  static const String _keyGiaoDichWeb = 'csdl_giao_dich';
-  static const String _keyDanhMucWeb = 'csdl_danh_muc';
-  static const String _keyNganSachWeb = 'csdl_ngan_sach';
+  // Mỗi tài khoản có CSDL riêng (khóa theo email) -> đăng nhập tài khoản khác
+  // sẽ thấy dữ liệu trống (0đ), không dính dữ liệu của người trước.
+  static String _nguoiDung = 'khach';
+
+  static String get _keyGiaoDichWeb => 'csdl_giao_dich_$_nguoiDung';
+  static String get _keyDanhMucWeb => 'csdl_danh_muc_$_nguoiDung';
+  static String get _keyNganSachWeb => 'csdl_ngan_sach_$_nguoiDung';
 
   static Database? _database;
+
+  /// Chuyển sang CSDL của người dùng [email]. Truyền null/rỗng = khách (đã đăng xuất).
+  static Future<void> datNguoiDung(String? email) async {
+    final String id = (email == null || email.trim().isEmpty)
+        ? 'khach'
+        : email.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
+    if (id == _nguoiDung && _database != null) return;
+    _nguoiDung = id;
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
+  }
 
   static Future<Database> get database async {
     if (_database != null) return _database!;
@@ -20,7 +37,7 @@ class DichVuCSDL {
 
   static Future<Database> _khoiTaoCSDL() async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'quanly_chitieu.db');
+    final path = join(dbPath, 'quanly_chitieu_$_nguoiDung.db');
 
     return await openDatabase(
       path,
@@ -61,10 +78,7 @@ class DichVuCSDL {
           )
         ''');
 
-        // Chèn dữ liệu mẫu ban đầu nếu CSDL mới khởi tạo
-        for (var item in DuLieuMau.danhSachGiaoDich) {
-          await db.insert('giao_dich', item.toMap());
-        }
+        // Tài khoản mới: KHÔNG chèn giao dịch mẫu -> mọi số liệu bắt đầu từ 0
         for (var cat in DuLieuMau.danhSachDanhMuc) {
           await db.insert('danh_muc', cat.toMap());
         }
@@ -81,7 +95,7 @@ class DichVuCSDL {
       final prefs = await SharedPreferences.getInstance();
       final str = prefs.getString(_keyGiaoDichWeb);
       if (str == null || str.isEmpty) {
-        final initial = DuLieuMau.danhSachGiaoDich;
+        final initial = <MoHinhGiaoDich>[];
         await _luuGiaoDichWeb(initial);
         return initial;
       }

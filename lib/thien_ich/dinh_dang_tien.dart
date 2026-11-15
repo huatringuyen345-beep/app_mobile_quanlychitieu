@@ -3,17 +3,21 @@ import 'package:flutter/services.dart';
 class DinhDangTienInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
+      TextEditingValue oldValue,
+      TextEditingValue newValue,
+      ) {
     if (newValue.text.isEmpty) {
-      return newValue.copyWith(text: '');
+      return const TextEditingValue(
+        text: '',
+        selection: TextSelection.collapsed(offset: 0),
+      );
     }
 
     // Chỉ giữ lại chữ số
     final rawDigits = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
     if (rawDigits.isEmpty) {
-      return newValue.copyWith(text: '');
+      // Gõ ký tự không phải số -> giữ nguyên giá trị cũ (tránh lỗi selection)
+      return oldValue;
     }
 
     // Loại bỏ các chữ số 0 thừa ở đầu (leading zeros)
@@ -29,6 +33,11 @@ class DinhDangTienInputFormatter extends TextInputFormatter {
         buffer.write('.');
       }
       buffer.write(cleanDigits[i]);
+    }
+
+    // Giới hạn 12 chữ số (tránh gõ "000" liên tục làm tràn số)
+    if (cleanDigits.length > 12) {
+      return oldValue;
     }
 
     final formattedText = buffer.toString();

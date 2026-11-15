@@ -1,6 +1,16 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../dich_vu/quan_ly_trang_thai_app.dart';
 import '../mo_hinh/mo_hinh_giao_dich.dart';
+import '../thien_ich/dinh_dang_tien.dart';
+
+// Mục trong danh sách đã gom nhóm theo ngày
+class _TieuDeNgay {
+  final String nhan;
+  final double tongThu;
+  final double tongChi;
+  const _TieuDeNgay(this.nhan, this.tongThu, this.tongChi);
+}
 
 class ManHinhDanhSachGiaoDich extends StatefulWidget {
   final Function(MoHinhGiaoDich)? chonGiaoDich;
@@ -19,194 +29,447 @@ class _ManHinhDanhSachGiaoDichState extends State<ManHinhDanhSachGiaoDich> {
   String _tuKhoaTimKiem = '';
 
   static const Color mauChinh = Color(0xFFE07852);
+  static const Color mauThu = Color(0xFF27AE60);
+  static const List<String> _nhanLoc = ['Tất cả', 'Thu nhập', 'Chi tiêu'];
+
+  String _nhanNgay(DateTime d) {
+    final now = DateTime.now();
+    final homNay = DateTime(now.year, now.month, now.day);
+    final ngay = DateTime(d.year, d.month, d.day);
+    final chenh = homNay.difference(ngay).inDays;
+    if (chenh == 0) return 'Hôm nay';
+    if (chenh == 1) return 'Hôm qua';
+    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  }
+
+  // Lọc + sắp xếp mới nhất trước + gom nhóm theo ngày
+  List<Object> _taoDanhSachHienThi(List<MoHinhGiaoDich> nguon) {
+    final tk = _tuKhoaTimKiem.toLowerCase();
+    final loc = nguon.where((item) {
+      if (_viTriLoc == 1 && !item.laThuNhap) return false;
+      if (_viTriLoc == 2 && item.laThuNhap) return false;
+      if (tk.isNotEmpty &&
+          !item.tieuDe.toLowerCase().contains(tk) &&
+          !item.danhMuc.toLowerCase().contains(tk)) {
+        return false;
+      }
+      return true;
+    }).toList()
+      ..sort((a, b) => b.ngayGiaoDich.compareTo(a.ngayGiaoDich));
+
+    final Map<String, List<MoHinhGiaoDich>> nhom = {};
+    for (final tx in loc) {
+      final d = tx.ngayGiaoDich;
+      final khoa = '${d.year}-${d.month}-${d.day}';
+      nhom.putIfAbsent(khoa, () => []).add(tx);
+    }
+
+    final List<Object> ketQua = [];
+    for (final ds in nhom.values) {
+      double thu = 0, chi = 0;
+      for (final tx in ds) {
+        tx.laThuNhap ? thu += tx.soTien : chi += tx.soTien;
+      }
+      ketQua.add(_TieuDeNgay(_nhanNgay(ds.first.ngayGiaoDich), thu, chi));
+      ketQua.addAll(ds);
+    }
+    return ketQua;
+  }
 
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final quanLy = QuanLyTrangThaiScope.of(context);
+    final mucHienThi = _taoDanhSachHienThi(quanLy.danhSachGiaoDich);
+    final giaoDichLoc = mucHienThi.whereType<MoHinhGiaoDich>().toList();
 
-    List<MoHinhGiaoDich> danhSachLoc = quanLy.danhSachGiaoDich.where((item) {
-      if (_viTriLoc == 1 && !item.laThuNhap) return false;
-      if (_viTriLoc == 2 && item.laThuNhap) return false;
-      if (_tuKhoaTimKiem.isNotEmpty &&
-          !item.tieuDe.toLowerCase().contains(_tuKhoaTimKiem.toLowerCase()) &&
-          !item.danhMuc.toLowerCase().contains(_tuKhoaTimKiem.toLowerCase())) {
-        return false;
-      }
-      return true;
-    }).toList();
+    double tongThu = 0, tongChi = 0;
+    for (final tx in giaoDichLoc) {
+      tx.laThuNhap ? tongThu += tx.soTien : tongChi += tx.soTien;
+    }
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: Text(
-          'Lịch sử giao dịch',
-          style: TextStyle(
-            color: isDark ? Colors.white : const Color(0xFF1E232A),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          // Ô tìm kiếm
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: TextField(
-              onChanged: (value) {
-                setState(() {
-                  _tuKhoaTimKiem = value;
-                });
-              },
-              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm giao dịch...',
-                hintStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
-                prefixIcon: Icon(Icons.search, color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.9) : Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.transparent),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: mauChinh, width: 1.5),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Lịch sử giao dịch',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF1E232A),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: mauChinh.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${giaoDichLoc.length} giao dịch',
+                      style: const TextStyle(
+                          color: mauChinh, fontWeight: FontWeight.w600, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Thẻ tổng quan thu / chi
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _theTongQuan(tongThu, tongChi),
+            ),
+            const SizedBox(height: 14),
+
+            // Ô tìm kiếm
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                onChanged: (v) => setState(() => _tuKhoaTimKiem = v),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                decoration: InputDecoration(
+                  hintText: 'Tìm theo tên hoặc danh mục...',
+                  hintStyle:
+                  TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
+                  prefixIcon: Icon(Icons.search_rounded,
+                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
+                  filled: true,
+                  fillColor: isDark
+                      ? const Color(0xFF1E293B).withValues(alpha: 0.9)
+                      : Colors.white,
+                  contentPadding: EdgeInsets.zero,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                        color: isDark ? const Color(0xFF334155) : Colors.transparent),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: mauChinh, width: 1.5),
+                  ),
                 ),
               ),
             ),
-          ),
+            const SizedBox(height: 12),
 
-          // Bộ lọc Tab
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Row(
+            // Bộ lọc dạng segmented có hiệu ứng trượt
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _boLoc(isDark),
+            ),
+            const SizedBox(height: 8),
+
+            // Danh sách
+            Expanded(
+              child: mucHienThi.isEmpty
+                  ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.receipt_long_rounded,
+                        size: 54,
+                        color: isDark ? const Color(0xFF475569) : Colors.black26),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Không tìm thấy giao dịch nào',
+                      style: TextStyle(
+                          color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
+                    ),
+                  ],
+                ),
+              )
+                  : ListView.builder(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                itemCount: mucHienThi.length,
+                itemBuilder: (context, index) {
+                  final muc = mucHienThi[index];
+                  if (muc is _TieuDeNgay) return _tieuDeNgay(muc, isDark);
+                  final tx = muc as MoHinhGiaoDich;
+                  return _hienDan(
+                    key: ValueKey(tx.id),
+                    index: index,
+                    child: _mucGiaoDich(tx, isDark),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------- Thành phần ----------
+
+  Widget _theTongQuan(double thu, double chi) {
+    Widget o(IconData icon, String nhan, double so) => Expanded(
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
+            child: Icon(icon, color: Colors.white, size: 18),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _taoNutLoc(0, 'Tất cả', isDark),
-                const SizedBox(width: 8),
-                _taoNutLoc(1, 'Thu nhập', isDark),
-                const SizedBox(width: 8),
-                _taoNutLoc(2, 'Chi tiêu', isDark),
+                Text(nhan,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    DinhDangTienInputFormatter.dinhDang(so),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16),
+                  ),
+                ),
               ],
             ),
           ),
+        ],
+      ),
+    );
 
-          const SizedBox(height: 8),
-
-          // Danh sách giao dịch
-          Expanded(
-            child: danhSachLoc.isEmpty
-                ? Center(
-                    child: Text(
-                      'Không tìm thấy giao dịch nào',
-                      style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    itemCount: danhSachLoc.length,
-                    itemBuilder: (context, index) {
-                      final item = danhSachLoc[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.88) : Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFF0F1EE),
-                          ),
-                        ),
-                        child: InkWell(
-                          onTap: () {
-                            if (widget.chonGiaoDich != null) {
-                              widget.chonGiaoDich!(item);
-                            }
-                          },
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 22,
-                                backgroundColor: item.mauNenIcon,
-                                child: Icon(item.icon, color: Colors.black87),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.tieuDe,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15,
-                                        color: isDark ? Colors.white : Colors.black87,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${item.danhMuc} • ${item.ngayGiaoDich.day}/${item.ngayGiaoDich.month}/${item.ngayGiaoDich.year}',
-                                      style: TextStyle(
-                                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                '${item.laThuNhap ? '+' : '-'}${item.soTien.toInt()} đ',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: item.laThuNhap
-                                      ? const Color(0xFF27AE60)
-                                      : const Color(0xFFE07852),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE07852), Color(0xFF8B5CF6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: mauChinh.withValues(alpha: 0.25),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
+        ],
+      ),
+      child: Row(
+        children: [
+          o(Icons.south_west_rounded, 'Thu nhập', thu),
+          Container(width: 1, height: 36, color: Colors.white24),
+          const SizedBox(width: 12),
+          o(Icons.north_east_rounded, 'Chi tiêu', chi),
         ],
       ),
     );
   }
 
-  Widget _taoNutLoc(int index, String nhan, bool isDark) {
-    final bool dangChon = _viTriLoc == index;
-    return ChoiceChip(
-      label: Text(nhan),
-      selected: dangChon,
-      onSelected: (selected) {
-        if (selected) {
-          setState(() {
-            _viTriLoc = index;
-          });
-        }
-      },
-      selectedColor: mauChinh,
-      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-      labelStyle: TextStyle(
-        color: dangChon
-            ? Colors.white
-            : (isDark ? const Color(0xFF94A3B8) : Colors.black87),
-        fontWeight: dangChon ? FontWeight.bold : FontWeight.normal,
+  Widget _boLoc(bool isDark) {
+    return LayoutBuilder(builder: (context, c) {
+      final double rong = (c.maxWidth - 8) / 3;
+      return Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF1E293B).withValues(alpha: 0.9)
+              : Colors.white.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Stack(
+          children: [
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              left: rong * _viTriLoc,
+              top: 0,
+              bottom: 0,
+              width: rong,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: mauChinh,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            Row(
+              children: List.generate(3, (i) {
+                final chon = _viTriLoc == i;
+                return Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => setState(() => _viTriLoc = i),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: chon ? FontWeight.bold : FontWeight.w500,
+                            color: chon
+                                ? Colors.white
+                                : (isDark ? const Color(0xFF94A3B8) : Colors.black54),
+                          ),
+                          child: Text(_nhanLoc[i]),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _tieuDeNgay(_TieuDeNgay h, bool isDark) {
+    final mauChu = isDark ? const Color(0xFF94A3B8) : Colors.black54;
+    return Padding(
+      padding: const EdgeInsets.only(top: 14, bottom: 8),
+      child: Row(
+        children: [
+          Text(
+            h.nhan,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+          const Spacer(),
+          if (h.tongThu > 0)
+            Text('+${DinhDangTienInputFormatter.dinhDang(h.tongThu)}  ',
+                style: const TextStyle(
+                    color: mauThu, fontSize: 12, fontWeight: FontWeight.w600)),
+          if (h.tongChi > 0)
+            Text('-${DinhDangTienInputFormatter.dinhDang(h.tongChi)}',
+                style: TextStyle(
+                    color: mauChu, fontSize: 12, fontWeight: FontWeight.w600)),
+        ],
       ),
-      shape: RoundedRectangleBorder(
+    );
+  }
+
+  // Hiệu ứng trượt lên + hiện dần, lệch nhịp theo vị trí
+  Widget _hienDan({required Key key, required int index, required Widget child}) {
+    return TweenAnimationBuilder<double>(
+      key: key,
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: 350 + math.min(index, 8) * 60),
+      curve: Curves.easeOutCubic,
+      builder: (context, v, c) => Opacity(
+        opacity: v,
+        child: Transform.translate(offset: Offset(0, (1 - v) * 18), child: c),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _mucGiaoDich(MoHinhGiaoDich item, bool isDark) {
+    final t = item.ngayGiaoDich;
+    final gio =
+        '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+    final mauTien = item.laThuNhap ? mauThu : mauChinh;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: isDark
+            ? const Color(0xFF1E293B).withValues(alpha: 0.88)
+            : Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: dangChon
-              ? mauChinh
-              : (isDark ? const Color(0xFF334155) : Colors.grey.shade300),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFF0F1EE),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => widget.chonGiaoDich?.call(item),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: item.mauNenIcon,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(item.icon, color: Colors.black87),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.tieuDe,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Container(
+                            padding:
+                            const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: mauTien.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              item.danhMuc,
+                              style: TextStyle(
+                                  color: mauTien,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            gio,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? const Color(0xFF94A3B8) : Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${item.laThuNhap ? '+' : '-'}${DinhDangTienInputFormatter.dinhDang(item.soTien)}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: mauTien,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
