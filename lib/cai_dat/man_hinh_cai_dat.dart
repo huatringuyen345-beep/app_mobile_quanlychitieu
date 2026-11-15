@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../dich_vu/quan_ly_trang_thai_app.dart';
 import '../dich_vu/dich_vu_luu_tru.dart';
+import '../dich_vu/dich_vu_thong_bao.dart';
+import '../thong_bao/man_hinh_cai_dat_thong_bao.dart';
 
 class ManHinhCaiDat extends StatefulWidget {
   final VoidCallback? chuyenToiDanhMuc;
   final VoidCallback? chuyenToiNganSach;
+  final VoidCallback? chuyenToiThongBao;
   final VoidCallback? dangXuat;
 
   final ValueChanged<bool>? khiDoiGiaoDienToi;
@@ -14,6 +17,7 @@ class ManHinhCaiDat extends StatefulWidget {
     super.key,
     this.chuyenToiDanhMuc,
     this.chuyenToiNganSach,
+    this.chuyenToiThongBao,
     this.dangXuat,
     this.khiDoiGiaoDienToi,
     this.laGiaoDienToi = false,
@@ -43,11 +47,13 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
   Future<void> _taiThongTinNguoiDung() async {
     final thongTin = await DichVuLuuTru.layThongTinNguoiDung();
     final isDark = await DichVuLuuTru.layGiaoDienToi();
+    final isNotify = await DichVuThongBao().layChoPhepThongBao();
     if (mounted) {
       setState(() {
         _hoTen = thongTin['hoTen'] ?? 'HỨA TRÍ NGUYÊN';
         _email = thongTin['email'] ?? 'huatringuyen345@gmail.com';
         _giaoDienToi = isDark;
+        _thongBao = isNotify;
       });
     }
   }
@@ -313,15 +319,23 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
                     isDark: isDark,
                   ),
                   Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? const Color(0xFF334155) : null),
-                  _taoMucCongTac(
+                  _taoMucCaiDat(
                     icon: Icons.notifications_active_rounded,
                     mauIcon: Colors.amber,
-                    tieuDe: 'Thông báo nhắc nhở',
-                    giaTri: _thongBao,
-                    khiDoi: (val) {
-                      setState(() {
-                        _thongBao = val;
-                      });
+                    tieuDe: 'Thông báo & Lịch nhắc nhở',
+                    moTa: _thongBao
+                        ? 'Đang bật • Đặt thời gian & lịch nhắc nhở'
+                        : 'Đã tắt thông báo nhắc nhở',
+                    onTap: () {
+                      if (widget.chuyenToiThongBao != null) {
+                        widget.chuyenToiThongBao!();
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const ManHinhCaiDatThongBao()),
+                        ).then((_) => _taiThongTinNguoiDung());
+                      }
                     },
                     isDark: isDark,
                   ),

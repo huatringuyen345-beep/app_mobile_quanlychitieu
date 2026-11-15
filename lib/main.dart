@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'cot_loi/giao_dien/giao_dien_app.dart';
 import 'cot_loi/giao_dien/khung_nen_app.dart';
 import 'dich_vu/dich_vu_luu_tru.dart';
+import 'dich_vu/dich_vu_thong_bao.dart';
 import 'dich_vu/quan_ly_trang_thai_app.dart';
 import 'mo_hinh/mo_hinh_giao_dich.dart';
 import 'thanh_phan/thanh_dieu_huong_duoi.dart';
@@ -14,6 +15,7 @@ import 'thong_ke/man_hinh_thong_ke.dart';
 import 'danh_muc/man_hinh_danh_muc.dart';
 import 'ngan_sach/man_hinh_ngan_sach.dart';
 import 'cai_dat/man_hinh_cai_dat.dart';
+import 'thong_bao/man_hinh_cai_dat_thong_bao.dart';
 import 'log in/dang_ky.dart';
 import 'log in/dang_nhap.dart';
 
@@ -39,6 +41,7 @@ class _ExpenseAppState extends State<ExpenseApp> {
   void initState() {
     super.initState();
     _taiCauHinhGiaoDien();
+    DichVuThongBao().khoiTao();
   }
 
   Future<void> _taiCauHinhGiaoDien() async {
@@ -115,6 +118,7 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
     '8. Cài đặt & Tài khoản (Cai dat)',
     '9. Đăng ký tài khoản (Dang ky)',
     '10. Đăng nhập (Dang nhap)',
+    '11. Cài đặt thông báo & Nhắc nhở (Thong bao)',
   ];
 
   @override
@@ -180,6 +184,11 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
             chuyenToiNganSach: () {
               setState(() {
                 _viTriManHinhDocLap = 7;
+              });
+            },
+            chuyenToiThongBao: () {
+              setState(() {
+                _viTriManHinhDocLap = 11;
               });
             },
             dangXuat: () {
@@ -301,6 +310,7 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
           khiDoiGiaoDienToi: widget.onToggleDarkMode,
           chuyenToiDanhMuc: () => setState(() => _viTriManHinhDocLap = 6),
           chuyenToiNganSach: () => setState(() => _viTriManHinhDocLap = 7),
+          chuyenToiThongBao: () => setState(() => _viTriManHinhDocLap = 11),
           dangXuat: () => setState(() => _viTriManHinhDocLap = 10),
         );
       case 9:
@@ -313,6 +323,8 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
           chuyenToiDangKy: () => setState(() => _viTriManHinhDocLap = 9),
           khiDangNhapThanhCong: () => setState(() => _viTriManHinhDocLap = -1),
         );
+      case 11:
+        return const ManHinhCaiDatThongBao();
       default:
         return const ManHinhTrangChu();
     }

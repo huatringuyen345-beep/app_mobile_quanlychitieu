@@ -6,6 +6,7 @@ import '../dich_vu/quan_ly_trang_thai_app.dart';
 import '../mo_hinh/mo_hinh_giao_dich.dart';
 import '../thanh_phan/the_so_du.dart';
 import '../thien_ich/dinh_dang_tien.dart';
+import '../thong_bao/man_hinh_cai_dat_thong_bao.dart';
 
 // ============================================================
 // TRANG CHỦ (đã gộp "Chia lương sáu hũ")
@@ -236,14 +237,18 @@ class _ManHinhTrangChuState extends State<ManHinhTrangChu>
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Cài đặt & Lịch thông báo',
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Không có thông báo mới')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ManHinhCaiDatThongBao(),
+                        ),
                       );
                     },
                     icon: Icon(
-                      Icons.notifications_none_rounded,
-                      color: isDark ? Colors.white : Colors.black87,
+                      Icons.notifications_active_rounded,
+                      color: isDark ? Colors.amber : mauChinh,
                     ),
                   ),
                 ],
