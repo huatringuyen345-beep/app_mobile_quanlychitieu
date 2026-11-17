@@ -22,7 +22,7 @@ class DichVuThongBao {
 
   /// Khởi tạo dịch vụ thông báo & múi giờ
   Future<void> khoiTao() async {
-    if (_daKhoiTao) return;
+    if (_daKhoiTao || kIsWeb) return;
 
     try {
       // 1. Khởi tạo múi giờ
@@ -120,6 +120,7 @@ class DichVuThongBao {
     required String tieuDe,
     required String noiDung,
   }) async {
+    if (kIsWeb) return;
     await khoiTao();
     try {
       final id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
@@ -136,6 +137,7 @@ class DichVuThongBao {
 
   /// Lên lịch thông báo theo `MoHinhLichNhacNho`
   Future<void> lapLichThongBao(MoHinhLichNhacNho nhacNho) async {
+    if (kIsWeb) return;
     await khoiTao();
     if (!nhacNho.kichHoat) return;
 
@@ -197,6 +199,7 @@ class DichVuThongBao {
 
   /// Hủy 1 lịch thông báo theo ID
   Future<void> huyThongBao(int id) async {
+    if (kIsWeb) return;
     try {
       await _notificationsPlugin.cancel(id: id);
     } catch (e) {
@@ -206,6 +209,7 @@ class DichVuThongBao {
 
   /// Hủy toàn bộ thông báo hệ thống
   Future<void> huyTatCaThongBao() async {
+    if (kIsWeb) return;
     try {
       await _notificationsPlugin.cancelAll();
     } catch (e) {

@@ -4,109 +4,108 @@
 ================================================================================
 
 --------------------------------------------------------------------------------
-I. CÁC CHỨC NĂNG HIỆN CÓ (ĐÃ HOÀN THÀNH GIAO DIỆN & LUỒNG CƠ BẢN)
+I. CÁC CHỨC NĂNG HIỆN CÓ (ĐÃ HOÀN THÀNH GIAO DIỆN, LÕI CSDL & LOGIC NỀN)
 --------------------------------------------------------------------------------
 
 1. MÀN HÌNH KHỎI ĐẦU (SPLASH / LOADING)
-   - Đếm ngược tiến trình tải ứng dụng (cấu hình 10 giây).
-   - Hiệu ứng Rive animation (loading-ride.riv) mượt mà màu Cyan RGB phát sáng.
+   - Tiến trình tải ứng dụng với thanh tiến trình và hiệu ứng xu bay mượt mà.
+   - Hiệu ứng Rive animation (loading-ride.riv) màu Cyan RGB phát sáng.
    - Hiển thị Logo, tên ứng dụng "Quản lý Chi tiêu" và thông tin phiên bản (v1.0.0).
 
-2. XÁC THỰC NGƯỜI DÙNG (DANG NHAP & DANG KY)
+2. XÁC THỰC NGƯỜI DÙNG (ĐĂNG NHẬP & ĐĂNG KÝ)
    - Màn hình Đăng nhập (DangNhap):
      + Hiệu ứng kính mờ Glassmorphic overlay với nền Rive animation (shapes.riv).
      + Nhập Email/Số điện thoại và Mật khẩu (có phím ẩn/hiện mật khẩu).
      + Tùy chọn Checkbox "Ghi nhớ đăng nhập".
-     + Xử lý đăng nhập và lưu trạng thái vào SharedPreferences.
+     + Xử lý đăng nhập và lưu trạng thái người dùng (mặc định huatringuyen345@gmail.com).
    - Màn hình Đăng ký (DangKy):
      + Form đăng ký: Họ và tên, Email, Mật khẩu, Xác nhận mật khẩu.
      + Checkbox đồng ý với "Điều khoản & Chính sách bảo mật".
-     + Xử lý đăng ký tài khoản mới.
 
-3. TRANG CHỦ & THẺ SỐ DƯ (TRANG CHU & THE SO DU)
+3. TRANG CHỦ & THẺ SỐ DƯ (TRANG CHỦ & THẺ SỐ DƯ)
    - Thẻ số dư (TheSoDu):
      + Hiển thị Tổng số dư tài khoản chính (Ví chính).
      + Hiển thị chi tiết Tổng Thu nhập (màu xanh) và Tổng Chi tiêu (màu hồng/cam).
    - Phím thao tác nhanh: Nút "Thêm thu" và "Thêm chi".
    - Giao dịch gần đây: Hiển thị danh sách 3 giao dịch mới nhất kèm nút "Xem tất cả".
 
-4. QUẢN LÝ & LỊCH SỬ GIAO DỊCH (DANH SACH GIAO DICH)
+4. QUẢN LÝ & LỊCH SỬ GIAO DỊCH (DANH SÁCH GIAO DỊCH)
    - Ô tìm kiếm giao dịch theo từ khóa (tên giao dịch hoặc danh mục).
    - Bộ lọc Tab: Lọc theo "Tất cả", "Thu nhập", hoặc "Chi tiêu".
    - Danh sách giao dịch: Hiển thị icon danh mục, tên giao dịch, ngày tháng và số tiền âm (-) / dương (+).
 
-5. THÊM GIAO DỊCH MỚI (THEM GIAO DICH)
+5. THÊM GIAO DỊCH MỚI (THÊM GIAO DỊCH)
    - Chuyển đổi qua lại giữa loại "Chi tiêu" và "Thu nhập".
-   - Nhập số tiền giao dịch và Tên/Nội dung giao dịch.
+   - Nhập số tiền giao dịch kèm tự động định dạng phân cách hàng nghìn (xử lý chuẩn số 0 ở đầu).
+   - Nhập Tên/Nội dung giao dịch (tự động lấy tên danh mục làm mặc định nếu không nhập).
    - Chọn danh mục thu/chi tương ứng.
    - Chọn ngày giao dịch (tích hợp DatePicker).
    - Nhập ghi chú chi tiết cho giao dịch.
 
-6. CHI TIẾT GIAO DỊCH (CHI TIET GIAO DICH)
+6. CHI TIẾT GIAO DỊCH (CHI TIẾT GIAO DỊCH)
    - Hiển thị hóa đơn chi tiết dạng thẻ: Icon, tên giao dịch, danh mục, số tiền, ngày giờ, trạng thái và ghi chú.
    - Nút chức năng "Chỉnh sửa giao dịch" và "Xóa giao dịch".
 
-7. THỐNG KÊ & BÁO CÁO (THONG KE)
+7. THỐNG KÊ & BÁO CÁO (THỐNG KÊ)
    - Chuyển đổi báo cáo xem Tổng Chi Tiêu hoặc Tổng Thu Nhập trong tháng.
    - Chỉ số tổng quan: Chi tiêu trung bình/ngày, tỷ lệ so sánh với tháng trước.
    - Biểu đồ cột (Bar Chart): Thống kê chi tiêu theo từng ngày trong tuần (T2 -> CN), nổi bật ngày chi cao nhất.
    - Phân tích theo danh mục: Hiển thị phần trăm chi tiêu của từng danh mục (Ăn uống, Đi lại, Mua sắm, Hóa đơn...) bằng thanh tiến trình LinearProgressIndicator.
 
-8. QUẢN LÝ NGÂN SÁCH & TIẾT KIỆM (NGAN SACH)
-   - Đặt hạn mức chi tiêu hàng tháng cho từng danh mục.
+8. QUẢN LÝ NGÂN SÁCH & HŨ TÀI CHÍNH (NGÂN SÁCH & 6 HŨ)
+   - Thiết lập nhãn và hạn mức chi tiêu hàng tháng cho từng hũ / danh mục.
+   - Bắt buộc nhập tên/nhãn hũ trước khi cho phép bấm lưu.
+   - Gợi ý nhanh các nhãn hũ tài chính tiêu chuẩn (Quy tắc 6 Hũ).
    - Hiển thị số tiền đã dùng / hạn mức cho phép và phần trăm đã dùng.
    - Thanh tiến trình cảnh báo trực quan (chuyển màu đỏ khi dùng > 90% hạn mức).
-   - Nút thêm hạn mức ngân sách mới.
 
-9. QUẢN LÝ DANH MỤC (DANH MUC)
+9. QUẢN LÝ DANH MỤC (DANH MỤC)
    - Lưới danh mục 3 cột (phân chia tab Chi tiêu và Thu nhập).
    - Thêm danh mục mới (Modal Bottom Sheet):
-     + Nhập tên danh mục tùy chỉnh.
-     + Chọn icon biểu tượng mẫu.
-     + Chọn màu sắc đại diện.
+     + Nhập tên danh mục (bắt buộc).
+     + Chọn icon biểu tượng mẫu và màu sắc đại diện.
 
-10. CÀI ĐẶT & TÀI KHOẢN (CAI DAT)
-    - Thông tin cá nhân: Hiển thị Họ tên và Email tài khoản hiện tại.
+10. CÀI ĐẶT & TÀI KHOẢN (CÀI ĐẶT)
+    - Thông tin cá nhân: Hiển thị Họ tên (HỨA TRÍ NGUYÊN) và Email tài khoản (huatringuyen345@gmail.com).
     - Quản lý dữ liệu: Lối tắt tới Quản lý danh mục & Quản lý ngân sách.
-    - Cài đặt ứng dụng:
-      + Bật/tắt Giao diện tối (Dark Mode).
-      + Bật/tắt Bảo mật vân tay.
-      + Bật/tắt Thông báo nhắc nhở.
-    - Hệ thống: Sao lưu & phục hồi dữ liệu đám mây, thông tin phiên bản.
+    - Cài đặt ứng dụng: Bật/tắt Giao diện tối (Dark Mode), Bảo mật vân tay, Thông báo nhắc nhở.
     - Đăng xuất: Hộp thoại AlertDialog xác nhận đăng xuất.
 
-11. GIAO DIỆN & HẠ TẦNG NỀN
-    - Hỗ trợ Giao diện Sáng / Tối (Light & Dark Theme).
-    - Lưu trữ dữ liệu cục bộ SharedPreferences (trạng thái đăng nhập, người dùng, giao diện).
-    - Thanh điều hướng AppBar Dropdown cho phép chuyển nhanh giữa chế độ xem toàn bộ ứng dụng và xem từng màn hình độc lập.
+11. CƠ SỞ DỮ LIỆU NỘI ĐỊA (SQLITE) & ĐỒNG BỘ CLOUD FIREBASE
+    - Tích hợp CSDL SQLite nội địa (`quanly_chitieu.db`) qua thư viện `sqflite` lưu trữ vĩnh viễn giao dịch, danh mục, ngân sách.
+    - Quản lý trạng thái realtime (`QuanLyTrangThaiApp` + `ChangeNotifier` / `InheritedNotifier`).
+    - Dịch vụ Firebase Cloud (`DichVuFirebase`): Kết nối trực tiếp với Firebase Realtime Database `qlct-9172c148-default-rtdb` theo tài khoản `huatringuyen345@gmail.com`.
+    - Bộ kiểm tra điều kiện logic (`KiemTraDieuKien`): Yêu cầu có khoản thu nhập trước khi chi tiêu, kiểm tra số dư khả dụng, kiểm tra số tiền tối đa.
 
 
 --------------------------------------------------------------------------------
-II. CÁC CHỨC NĂNG CÒN THIẾU & CẦN PHÁT TRIỂN (ROADMAP)
+II. CÁC CHỨC NĂNG CẦN PHÁT TRIỂN TIẾP THEO (ROADMAP)
 --------------------------------------------------------------------------------
 
-1. CƠ SỞ DỮ LIỆU NỘI ĐỊA (LOCAL DATABASE) & STATE MANAGEMENT
-   - Chưa tích hợp cơ sở dữ liệu thật (SQLite/Sqflite, Hive, Isar, Drift) để lưu trữ vĩnh viễn danh sách giao dịch, ngân sách, danh mục.
-   - Thiếu cơ chế Quản lý trạng thái (Provider, Riverpod, Bloc, GetX) để tự động cập nhật số dư, thống kê, ngân sách realtime khi có giao dịch mới.
+1. BẢO MẬT SINH TRẮC HỌC THỰC TẾ (LOCAL BIOMETRIC AUTHENTICATION)
+   - Tích hợp thư viện `local_auth` để mở khóa ứng dụng bằng Vân tay (Fingerprint) hoặc FaceID thực tế khi mở app.
 
-2. XÁC THỰC BACKEND & ĐỒNG BỘ ĐÁM MÂY (CLOUD SYNC)
-   - Chưa kết nối Backend thực sự (Firebase Auth, Supabase hoặc REST API).
-   - Chức năng "Quên mật khẩu" và "Sao lưu & Phục hồi" hiện mới là giao diện chờ.
+2. THÔNG BÁO NHẮC NHỞ TỰ ĐỘNG (LOCAL NOTIFICATIONS)
+   - Tích hợp thư viện `flutter_local_notifications` gửi thông báo nhắc nhở người dùng nhập chi tiêu hàng ngày (ví dụ 20:00 tối).
 
-3. QUẢN LÝ NHIỀU VÍ / TÀI KHOẢN (MULTI-WALLET)
-   - Chưa hỗ trợ quản lý nhiều nguồn tiền riêng biệt (Ví tiền mặt, Ví MoMo, ZaloPay, Thẻ ATM ngân hàng, Thẻ tín dụng...).
+3. QUẢN LÝ NHIỀU VÍ / TÀI KHOẢN TÀI CHÍNH (MULTI-WALLET MANAGEMENT)
+   - Hỗ trợ quản lý nhiều nguồn tiền riêng biệt: Ví tiền mặt, Tài khoản Ngân hàng (VCB, TCB, MB...), Ví điện tử (MoMo, ZaloPay), Thẻ tín dụng.
+   - Chức năng chuyển tiền qua lại giữa các ví (Wallet Transfer).
 
-4. GIAO DỊCH ĐỊNH KỲ (RECURRING TRANSACTIONS)
-   - Chưa có tính năng lập lịch tự động ghi nhận các khoản thu/chi cố định lặp lại theo tuần/tháng (Tiền nhà, Tiền điện nước, Tiền lương, Gói mạng...).
+4. GIAO DỊCH ĐỊNH KỲ TỰ ĐỘNG (RECURRING TRANSACTIONS)
+   - Tự động lập lịch ghi nhận các khoản thu/chi cố định lặp lại theo tuần/tháng (Tiền thuê nhà, Điện nước, Gói mạng, Lương cố định...).
 
-5. XUẤT BÁO CÁO (EXPORT REPORTS)
-   - Thiếu tính năng xuất báo cáo lịch sử giao dịch và thống kê ra tập tin Excel (XLSX), CSV hoặc PDF.
+5. XUẤT BÁO CÁO TÀI CHÍNH (EXPORT REPORTS TO EXCEL/PDF)
+   - Cho phép xuất lịch sử giao dịch và báo cáo thống kê ra tập tin Excel (XLSX), CSV hoặc tập tin PDF.
 
-6. BẢO MẬT SINH TRẮC HỌC THỰC TẾ (LOCAL AUTHENTICATION)
-   - Chưa tích hợp thư viện `local_auth` để xác thực vân tay / FaceID thực sự khi mở app.
+6. BỘ LỌC VÀ TÌM KIẾM NÂNG CAO (ADVANCED SEARCH & FILTERS)
+   - Bộ lọc giao dịch theo khoảng thời gian tùy chọn (từ ngày... đến ngày...) và khoảng số tiền (Min - Max).
 
-7. THÔNG BÁO NHẮC NHỞ TỰ ĐỘNG (LOCAL NOTIFICATIONS)
-   - Chưa tích hợp thư viện `flutter_local_notifications` để gửi thông báo nhắc nhở người dùng nhập chi tiêu hàng ngày.
+7. XÁC THỰC FIREBASE AUTH & ĐỒNG BỘ ĐA THIẾT BỊ (FIREBASE AUTH & MULTI-DEVICE SYNC)
+   - Tích hợp `firebase_auth` cho phép đăng nhập bằng Google / OTP Điện thoại thực tế và đồng bộ dữ liệu Realtime Database đa thiết bị.
 
-8. BỘ LỌC VÀ TÌM KIẾM NÂNG CAO (ADVANCED SEARCH & FILTERS)
-   - Thiếu bộ lọc giao dịch theo khoảng thời gian tùy chọn (từ ngày... đến ngày...) và khoảng số tiền.
+8. QUÉT HÓA ĐƠN THÔNG MINH (OCR INVOICE SCANNING)
+   - Tích hợp camera quét hóa đơn mua sắm bằng trí tuệ nhân tạo (OCR) để tự động điền số tiền, ngày tháng và tên cửa hàng.
+
+9. TIỆN ÍCH WIDGET TRÊN MÀN HÌNH CHÍNH (HOMESCREEN WIDGETS)
+   - Cung cấp Widget màn hình chính trên Android/iOS để xem nhanh số dư và nút thêm nhanh giao dịch mà không cần mở ứng dụng.

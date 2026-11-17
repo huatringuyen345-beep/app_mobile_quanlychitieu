@@ -22,10 +22,48 @@ class _ManHinhThemGiaoDichState extends State<ManHinhThemGiaoDich> {
   final TextEditingController _tieuDeController = TextEditingController();
   final TextEditingController _ghiChuController = TextEditingController();
   MoHinhDanhMuc? _danhMucChon;
-  DateTime _ngayChon = DateTime.now();
+  DateTime _ngayChon = DateTime.now(); // chứa cả ngày lẫn giờ:phút
 
   static const Color mauChinh = Color(0xFFE07852);
   static const Color mauChiTieu = Color(0xFFE07852);
+
+  @override
+  void dispose() {
+    _soTienController.dispose();
+    _tieuDeController.dispose();
+    _ghiChuController.dispose();
+    super.dispose();
+  }
+
+  /// Chọn ngày, sau đó chọn tiếp giờ (định dạng 24h)
+  Future<void> _chonNgayGio() async {
+    final ngay = await showDatePicker(
+      context: context,
+      initialDate: _ngayChon,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+    if (ngay == null || !mounted) return;
+
+    final gio = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_ngayChon),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
+    if (gio == null) return;
+
+    setState(() {
+      _ngayChon = DateTime(ngay.year, ngay.month, ngay.day, gio.hour, gio.minute);
+    });
+  }
+
+  String _dinhDangNgayGio(DateTime d) {
+    String hai(int n) => n.toString().padLeft(2, '0');
+    return '${hai(d.day)}/${hai(d.month)}/${d.year} - ${hai(d.hour)}:${hai(d.minute)}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -273,21 +311,9 @@ class _ManHinhThemGiaoDichState extends State<ManHinhThemGiaoDich> {
 
             const SizedBox(height: 20),
 
-            // Chọn ngày
+            // Chọn ngày + giờ
             GestureDetector(
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: _ngayChon,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2030),
-                );
-                if (picked != null) {
-                  setState(() {
-                    _ngayChon = picked;
-                  });
-                }
-              },
+              onTap: _chonNgayGio,
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -299,17 +325,18 @@ class _ManHinhThemGiaoDichState extends State<ManHinhThemGiaoDich> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today_rounded, color: mauChinh),
+                    const Icon(Icons.event_rounded, color: mauChinh),
                     const SizedBox(width: 12),
-                    Text(
-                      'Ngày: ${_ngayChon.day}/${_ngayChon.month}/${_ngayChon.year}',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white : Colors.black87,
+                    Expanded(
+                      child: Text(
+                        'Thời gian: ${_dinhDangNgayGio(_ngayChon)}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
                       ),
                     ),
-                    const Spacer(),
                     Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 16,
@@ -370,7 +397,7 @@ class _ManHinhThemGiaoDichState extends State<ManHinhThemGiaoDich> {
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
                     tieuDe: tieuDe,
                     soTien: soTien!,
-                    ngayGiaoDich: _ngayChon,
+                    ngayGiaoDich: _ngayChon, // đã gồm cả giờ:phút
                     loai: _loai,
                     icon: _danhMucChon?.icon ?? Icons.receipt_long_rounded,
                     mauNenIcon: _danhMucChon?.mauSac.withValues(alpha: 0.2) ?? const Color(0xFFFFE7D9),
