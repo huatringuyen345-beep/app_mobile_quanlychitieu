@@ -42,6 +42,11 @@ class DichVuCSDL {
     return await openDatabase(
       path,
       version: 1,
+      onOpen: (db) async {
+        try {
+          await db.execute('ALTER TABLE ngan_sach ADD COLUMN nhan TEXT;');
+        } catch (_) {}
+      },
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE giao_dich (
@@ -71,6 +76,7 @@ class DichVuCSDL {
           CREATE TABLE ngan_sach (
             id TEXT PRIMARY KEY,
             danhMuc TEXT NOT NULL,
+            nhan TEXT,
             gioiHan REAL NOT NULL,
             daDung REAL NOT NULL,
             iconCodePoint INTEGER NOT NULL,
@@ -240,7 +246,7 @@ class DichVuCSDL {
   static Future<void> luuNganSach(MoHinhNganSach item) async {
     if (kIsWeb) {
       final list = await layTatCaNganSach();
-      final idx = list.indexWhere((x) => x.danhMuc == item.danhMuc);
+      final idx = list.indexWhere((x) => x.id == item.id || x.danhMuc == item.danhMuc);
       if (idx != -1) {
         list[idx] = item;
       } else {
@@ -253,6 +259,21 @@ class DichVuCSDL {
         'ngan_sach',
         item.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+  }
+
+  static Future<void> xoaNganSach(String id) async {
+    if (kIsWeb) {
+      final list = await layTatCaNganSach();
+      list.removeWhere((x) => x.id == id);
+      await _luuNganSachWeb(list);
+    } else {
+      final db = await database;
+      await db.delete(
+        'ngan_sach',
+        where: 'id = ?',
+        whereArgs: [id],
       );
     }
   }

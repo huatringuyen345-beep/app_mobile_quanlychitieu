@@ -34,8 +34,9 @@ class QuanLyTrangThaiApp extends ChangeNotifier {
   }
 
   Future<void> _khoiTao() async {
-    // Mở đúng CSDL của tài khoản đang đăng nhập lần trước (nếu có)
-    await DichVuCSDL.datNguoiDung(await DichVuLuuTru.layNguoiDungHienTai());
+    final emailHienTai = await DichVuLuuTru.layNguoiDungHienTai();
+    await DichVuCSDL.datNguoiDung(emailHienTai);
+    DichVuFirebase.datNguoiDung(emailHienTai);
     await taiDuLieuTuCSDL();
   }
 
@@ -51,6 +52,7 @@ class QuanLyTrangThaiApp extends ChangeNotifier {
     notifyListeners();
     await DichVuLuuTru.luuNguoiDungHienTai(e);
     await DichVuCSDL.datNguoiDung(e);
+    DichVuFirebase.datNguoiDung(e);
     await taiDuLieuTuCSDL();
   }
 
@@ -141,12 +143,19 @@ class QuanLyTrangThaiApp extends ChangeNotifier {
   Future<void> luuNganSach(MoHinhNganSach ns) async {
     await DichVuCSDL.luuNganSach(ns);
     await DichVuFirebase.dongBoNganSach(ns);
-    final idx = _danhSachNganSach.indexWhere((item) => item.danhMuc == ns.danhMuc);
+    final idx = _danhSachNganSach.indexWhere((item) => item.id == ns.id || item.danhMuc == ns.danhMuc);
     if (idx != -1) {
       _danhSachNganSach[idx] = ns;
     } else {
       _danhSachNganSach.add(ns);
     }
+    _capNhatDaDungChoNganSach();
+    notifyListeners();
+  }
+
+  Future<void> xoaNganSach(String id) async {
+    await DichVuCSDL.xoaNganSach(id);
+    _danhSachNganSach.removeWhere((item) => item.id == id);
     _capNhatDaDungChoNganSach();
     notifyListeners();
   }

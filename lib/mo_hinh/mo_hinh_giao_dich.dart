@@ -99,6 +99,7 @@ class MoHinhDanhMuc {
 class MoHinhNganSach {
   final String id;
   final String danhMuc;
+  final String nhan;
   final double gioiHan;
   final double daDung;
   final IconData icon;
@@ -107,16 +108,20 @@ class MoHinhNganSach {
   const MoHinhNganSach({
     required this.id,
     required this.danhMuc,
+    this.nhan = '',
     required this.gioiHan,
     this.daDung = 0.0,
     required this.icon,
     required this.mauSac,
   });
 
+  String get tenHienThi => nhan.trim().isNotEmpty ? nhan.trim() : danhMuc;
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'danhMuc': danhMuc,
+      'nhan': nhan,
       'gioiHan': gioiHan,
       'daDung': daDung,
       'iconCodePoint': icon.codePoint,
@@ -129,6 +134,7 @@ class MoHinhNganSach {
     return MoHinhNganSach(
       id: map['id'],
       danhMuc: map['danhMuc'],
+      nhan: map['nhan'] ?? '',
       gioiHan: (map['gioiHan'] as num).toDouble(),
       daDung: (map['daDung'] as num?)?.toDouble() ?? 0.0,
       // ignore: non_const_argument_for_const_parameter
@@ -140,6 +146,7 @@ class MoHinhNganSach {
   MoHinhNganSach copyWith({
     String? id,
     String? danhMuc,
+    String? nhan,
     double? gioiHan,
     double? daDung,
     IconData? icon,
@@ -148,6 +155,7 @@ class MoHinhNganSach {
     return MoHinhNganSach(
       id: id ?? this.id,
       danhMuc: danhMuc ?? this.danhMuc,
+      nhan: nhan ?? this.nhan,
       gioiHan: gioiHan ?? this.gioiHan,
       daDung: daDung ?? this.daDung,
       icon: icon ?? this.icon,

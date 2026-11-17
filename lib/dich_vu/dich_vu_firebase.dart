@@ -2,50 +2,72 @@ import 'dart:async';
 import '../mo_hinh/mo_hinh_giao_dich.dart';
 import 'dich_vu_mang.dart';
 
-/// Dịch vụ quản lý kết nối và đồng bộ dữ liệu đám mây với Firebase Firestore.
-/// Tài khoản kết nối mặc định trên Firebase: huatringuyen345@gmail.com
+/// Dịch vụ quản lý kết nối và đồng bộ dữ liệu đám mây với Firebase (Realtime Database & Firestore).
 class DichVuFirebase {
-  /// Tài khoản mặc định kiểm tra và phân vùng lưu trữ trên Firebase
-  static const String emailTaiKhoanFirebase = 'huatringuyen345@gmail.com';
+  static String _nguoiDungKey = 'khach';
+  static String _emailTaiKhoan = 'khach';
 
   static const String collectionGiaoDich = 'giao_dich';
   static const String collectionDanhMuc = 'danh_muc';
   static const String collectionNganSach = 'ngan_sach';
 
-  /// Đường dẫn cấu trúc lưu trữ dữ liệu Firebase Firestore cho tài khoản huatringuyen345@gmail.com
-  static String layDuongDanCollection(String collection) {
-    return 'users/$emailTaiKhoanFirebase/$collection';
+  /// Thiết lập người dùng đăng nhập hiện tại và phân nhánh lưu trữ riêng biệt
+  static void datNguoiDung(String? email) {
+    if (email == null || email.trim().isEmpty) {
+      _nguoiDungKey = 'khach';
+      _emailTaiKhoan = 'khach';
+    } else {
+      _emailTaiKhoan = email.trim().toLowerCase();
+      _nguoiDungKey = _emailTaiKhoan.replaceAll(RegExp(r'[^a-z0-9]'), '_');
+    }
   }
 
-  // Bộ nhớ đệm dữ liệu đám mây khi chưa kết nối SDK Firebase trực tiếp
-  static final List<MoHinhGiaoDich> _boNhoGiaoDichCloud = [];
-  static final List<MoHinhDanhMuc> _boNhoDanhMucCloud = [];
-  static final List<MoHinhNganSach> _boNhoNganSachCloud = [];
+  /// Lấy email tài khoản Firebase hiện tại
+  static String layEmailTaiKhoan() => _emailTaiKhoan;
+
+  /// Lấy key nhánh người dùng hiện tại trên Firebase
+  static String layNguoiDungKey() => _nguoiDungKey;
+
+  /// Đường dẫn cấu trúc lưu trữ dữ liệu phân nhánh theo từng người dùng trên Firebase
+  static String layDuongDanCollection(String collection) {
+    return 'users/$_nguoiDungKey/$collection';
+  }
+
+  // Bộ nhớ đệm phân nhánh theo từng người dùng key
+  static final Map<String, List<MoHinhGiaoDich>> _boNhoGiaoDichMap = {};
+  static final Map<String, List<MoHinhDanhMuc>> _boNhoDanhMucMap = {};
+  static final Map<String, List<MoHinhNganSach>> _boNhoNganSachMap = {};
+
+  static List<MoHinhGiaoDich> get _boNhoGiaoDichCloud =>
+      _boNhoGiaoDichMap.putIfAbsent(_nguoiDungKey, () => []);
+
+  static List<MoHinhDanhMuc> get _boNhoDanhMucCloud =>
+      _boNhoDanhMucMap.putIfAbsent(_nguoiDungKey, () => []);
+
+  static List<MoHinhNganSach> get _boNhoNganSachCloud =>
+      _boNhoNganSachMap.putIfAbsent(_nguoiDungKey, () => []);
 
   /// Kiểm tra thiết bị có đang kết nối mạng hay không
   static Future<bool> kiemTraKetNoi() async {
     return await DichVuMang.kiemTraCoMang();
   }
 
-  /// Lấy email tài khoản Firebase hiện tại
-  static String layEmailTaiKhoan() => emailTaiKhoanFirebase;
-
   // ==========================================
   // --- ĐỒNG BỘ GIAO DỊCH (TRANSACTIONS) ---
   // ==========================================
 
-  /// Đồng bộ / Thêm giao dịch mới lên Firebase Cloud dưới tài khoản huatringuyen345@gmail.com
+  /// Đồng bộ / Thêm giao dịch mới lên Firebase Cloud dưới nhánh người dùng hiện tại
   static Future<bool> dongBoGiaoDich(MoHinhGiaoDich item) async {
     final hasInternet = await kiemTraKetNoi();
     if (!hasInternet) return false;
 
     try {
-      // Cập nhật bộ nhớ Cloud
-      final idx = _boNhoGiaoDichCloud.indexWhere((x) => x.id == item.id);
+      final list = _boNhoGiaoDichCloud;
+      final idx = list.indexWhere((x) => x.id == item.id);
       if (idx != -1) {
-        _boNhoGiaoDichCloud[idx] = item;
+        list[idx] = item;
       } else {
-        _boNhoGiaoDichCloud.insert(0, item);
+        list.insert(0, item);
       }
       return true;
     } catch (_) {
@@ -53,14 +75,14 @@ class DichVuFirebase {
     }
   }
 
-  /// Lấy danh sách giao dịch từ Firebase Cloud của tài khoản huatringuyen345@gmail.com
+  /// Lấy danh sách giao dịch từ Firebase Cloud của người dùng hiện tại
   static Future<List<MoHinhGiaoDich>> layTatCaGiaoDichFromCloud() async {
     final hasInternet = await kiemTraKetNoi();
     if (!hasInternet) return [];
     return List.unmodifiable(_boNhoGiaoDichCloud);
   }
 
-  /// Xóa giao dịch khỏi Firebase Cloud của tài khoản huatringuyen345@gmail.com
+  /// Xóa giao dịch khỏi Firebase Cloud của người dùng hiện tại
   static Future<bool> xoaGiaoDich(String id) async {
     final hasInternet = await kiemTraKetNoi();
     if (!hasInternet) return false;
@@ -77,17 +99,18 @@ class DichVuFirebase {
   // --- ĐỒNG BỘ DANH MỤC (CATEGORIES) ---
   // ==========================================
 
-  /// Đồng bộ / Thêm danh mục lên Firebase Cloud dưới tài khoản huatringuyen345@gmail.com
+  /// Đồng bộ / Thêm danh mục lên Firebase Cloud dưới nhánh người dùng hiện tại
   static Future<bool> dongBoDanhMuc(MoHinhDanhMuc item) async {
     final hasInternet = await kiemTraKetNoi();
     if (!hasInternet) return false;
 
     try {
-      final idx = _boNhoDanhMucCloud.indexWhere((x) => x.id == item.id);
+      final list = _boNhoDanhMucCloud;
+      final idx = list.indexWhere((x) => x.id == item.id);
       if (idx != -1) {
-        _boNhoDanhMucCloud[idx] = item;
+        list[idx] = item;
       } else {
-        _boNhoDanhMucCloud.add(item);
+        list.add(item);
       }
       return true;
     } catch (_) {
@@ -95,7 +118,7 @@ class DichVuFirebase {
     }
   }
 
-  /// Lấy danh sách danh mục từ Firebase Cloud của tài khoản huatringuyen345@gmail.com
+  /// Lấy danh sách danh mục từ Firebase Cloud của người dùng hiện tại
   static Future<List<MoHinhDanhMuc>> layTatCaDanhMucFromCloud() async {
     final hasInternet = await kiemTraKetNoi();
     if (!hasInternet) return [];
@@ -106,17 +129,18 @@ class DichVuFirebase {
   // --- ĐỒNG BỘ NGÂN SÁCH (BUDGETS) ---
   // ==========================================
 
-  /// Đồng bộ / Lưu ngân sách lên Firebase Cloud dưới tài khoản huatringuyen345@gmail.com
+  /// Đồng bộ / Lưu ngân sách lên Firebase Cloud dưới nhánh người dùng hiện tại
   static Future<bool> dongBoNganSach(MoHinhNganSach item) async {
     final hasInternet = await kiemTraKetNoi();
     if (!hasInternet) return false;
 
     try {
-      final idx = _boNhoNganSachCloud.indexWhere((x) => x.danhMuc == item.danhMuc);
+      final list = _boNhoNganSachCloud;
+      final idx = list.indexWhere((x) => x.id == item.id || x.danhMuc == item.danhMuc);
       if (idx != -1) {
-        _boNhoNganSachCloud[idx] = item;
+        list[idx] = item;
       } else {
-        _boNhoNganSachCloud.add(item);
+        list.add(item);
       }
       return true;
     } catch (_) {
@@ -124,7 +148,7 @@ class DichVuFirebase {
     }
   }
 
-  /// Lấy danh sách ngân sách từ Firebase Cloud của tài khoản huatringuyen345@gmail.com
+  /// Lấy danh sách ngân sách từ Firebase Cloud của người dùng hiện tại
   static Future<List<MoHinhNganSach>> layTatCaNganSachFromCloud() async {
     final hasInternet = await kiemTraKetNoi();
     if (!hasInternet) return [];

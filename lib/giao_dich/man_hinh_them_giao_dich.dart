@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../dich_vu/quan_ly_trang_thai_app.dart';
 import '../mo_hinh/mo_hinh_giao_dich.dart';
 import '../thien_ich/dinh_dang_tien.dart';
+import '../thien_ich/kiem_tra_dieu_kien.dart';
 
 class ManHinhThemGiaoDich extends StatefulWidget {
   final VoidCallback? khiDaLuu;
@@ -33,6 +34,8 @@ class _ManHinhThemGiaoDichState extends State<ManHinhThemGiaoDich> {
     final danhMucKhaDung = quanLy.danhSachDanhMuc.where((c) => c.loai == _loai).toList();
 
     _danhMucChon ??= danhMucKhaDung.isNotEmpty ? danhMucKhaDung.first : null;
+
+    final bool chuacoThuNhap = _loai == LoaiGiaoDich.chiTieu && quanLy.tongThuNhap <= 0;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -87,7 +90,35 @@ class _ManHinhThemGiaoDichState extends State<ManHinhThemGiaoDich> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+
+            // Cảnh báo khi chưa có thu nhập mà chọn Chi tiêu
+            if (chuacoThuNhap)
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade900.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.amber.shade700, width: 1.5),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 28),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Bạn chưa có thu nhập nào. Vui lòng nhập thu nhập vào trước mới được chi tiêu!',
+                        style: TextStyle(
+                          color: isDark ? Colors.amber.shade200 : Colors.amber.shade900,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             // Nhập số tiền
             Container(
@@ -310,21 +341,35 @@ class _ManHinhThemGiaoDichState extends State<ManHinhThemGiaoDich> {
               child: ElevatedButton(
                 onPressed: () async {
                   final double? soTien = DinhDangTienInputFormatter.giaiMaSoTien(_soTienController.text);
-                  if (soTien == null || soTien <= 0) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Vui lòng nhập số tiền hợp lệ (> 0)')),
-                    );
-                    return;
-                  }
-
                   final String tieuDe = _tieuDeController.text.trim().isNotEmpty
                       ? _tieuDeController.text.trim()
                       : (_danhMucChon?.tenDanhMuc ?? 'Giao dịch');
 
+                  // Kiểm tra toàn bộ điều kiện logic trước khi lưu
+                  final ketQua = KiemTraDieuKien.kiemTraGiaoDichTongHop(
+                    laChiTieu: _loai == LoaiGiaoDich.chiTieu,
+                    soTien: soTien,
+                    tieuDe: tieuDe,
+                    ngayGiaoDich: _ngayChon,
+                    tongThuNhap: quanLy.tongThuNhap,
+                    tongSoDu: quanLy.tongSoDu,
+                  );
+
+                  if (!ketQua.hopLe) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(ketQua.thongBao),
+                        backgroundColor: Colors.redAccent,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+
                   final newTx = MoHinhGiaoDich(
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
                     tieuDe: tieuDe,
-                    soTien: soTien,
+                    soTien: soTien!,
                     ngayGiaoDich: _ngayChon,
                     loai: _loai,
                     icon: _danhMucChon?.icon ?? Icons.receipt_long_rounded,
@@ -337,7 +382,7 @@ class _ManHinhThemGiaoDichState extends State<ManHinhThemGiaoDich> {
 
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đã lưu giao dịch vào CSDL thành công!')),
+                      const SnackBar(content: Text('Đã lưu giao dịch thành công!')),
                     );
                     if (widget.khiDaLuu != null) {
                       widget.khiDaLuu!();
