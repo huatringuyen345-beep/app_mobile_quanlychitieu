@@ -1,9 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart' hide Image, LinearGradient;
-import '../dich_vu/dich_vu_luu_tru.dart';
+import '../dich_vu/dich_vu_firebase.dart';
+import '../dich_vu/dich_vu_csdl.dart';
 import '../dich_vu/quan_ly_trang_thai_app.dart';
-import '../dich_vu/dich_vu_mang.dart';
 
 class ManHinhDangKy extends StatefulWidget {
   final VoidCallback? chuyenToiDangNhap;
@@ -53,36 +53,17 @@ class _ManHinhDangKyState extends State<ManHinhDangKy> {
         return;
       }
 
-      final coMang = await DichVuMang.kiemTraCoMang();
-      if (!coMang) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.wifi_off_rounded, color: Colors.white),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Bắt buộc có kết nối mạng Internet để Đăng ký tài khoản!',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.redAccent,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-        return;
-      }
+      await DichVuFirebase.dangKy(
+        _hoTenController.text.trim(),
+        _emailController.text.trim(),
+        _matKhauController.text,
+      );
 
       if (!mounted) return;
       await QuanLyTrangThaiScope.of(context)
           .chuyenNguoiDung(_emailController.text.trim());
 
-      await DichVuLuuTru.luuDangNhap(
+      await DichVuCSDL.luuThongTinNguoiDung(
         email: _emailController.text.trim(),
         hoTen: _hoTenController.text.trim(),
       );

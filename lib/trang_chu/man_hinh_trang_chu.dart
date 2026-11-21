@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../dich_vu/dich_vu_luu_tru.dart';
+import '../dich_vu/dich_vu_csdl.dart';
 import '../dich_vu/quan_ly_trang_thai_app.dart';
 import '../mo_hinh/mo_hinh_giao_dich.dart';
 import '../thanh_phan/the_so_du.dart';
@@ -104,25 +103,16 @@ class _ManHinhTrangChuState extends State<ManHinhTrangChu>
     _taiTyLe();
   }
 
-  // ---------- Lưu / tải tỷ lệ (riêng từng tài khoản) ----------
-  Future<String> _khoaTyLe() async {
-    final email = await DichVuLuuTru.layNguoiDungHienTai();
-    return 'ty_le_hu_${(email ?? 'khach').toLowerCase()}';
-  }
-
+  // ---------- Lưu / tải tỷ lệ từ SQLite ----------
   Future<void> _taiTyLe() async {
-    final prefs = await SharedPreferences.getInstance();
-    final ds = prefs.getStringList(await _khoaTyLe());
-    if (ds == null || ds.length != _cacHu.length) return;
-    final v = ds.map((e) => double.tryParse(e) ?? 0).toList();
+    final v = await DichVuCSDL.layTyLeHu();
+    if (v == null || v.length != _cacHu.length) return;
     if ((v.fold<double>(0, (a, b) => a + b) - 1).abs() > 0.001) return;
     if (mounted) setState(() => _tyLe = v);
   }
 
   Future<void> _luuTyLe(List<double> v) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
-        await _khoaTyLe(), v.map((e) => e.toString()).toList());
+    await DichVuCSDL.luuTyLeHu(v);
   }
 
   Future<void> _moBangTyLe(double tongThu) async {
@@ -358,38 +348,6 @@ class _ManHinhTrangChuState extends State<ManHinhTrangChu>
       color: isDark ? const Color(0xFF334155) : const Color(0xFFF0F1EE),
     ),
   );
-
-  Widget _taoNutThaoTac({
-    required IconData icon,
-    required String tieuDe,
-    required Color mauSac,
-    bool isDark = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18),
-      decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF1E293B).withValues(alpha: 0.85)
-            : Colors.white.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE8EAE5)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: mauSac, size: 30),
-          const SizedBox(height: 8),
-          Text(
-            tieuDe,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _theHu(int i, bool isDark, double tongThu, double soDuDich,
       QuanLyTrangThaiApp quanLy) {

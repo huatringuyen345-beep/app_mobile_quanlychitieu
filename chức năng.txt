@@ -98,7 +98,7 @@ II. CÁC CHỨC NĂNG CẦN PHÁT TRIỂN TIẾP THEO (ROADMAP)
 5. XUẤT BÁO CÁO TÀI CHÍNH (EXPORT REPORTS TO EXCEL/PDF)
    - Cho phép xuất lịch sử giao dịch và báo cáo thống kê ra tập tin Excel (XLSX), CSV hoặc tập tin PDF.
 
-6. BỘ LỌC VÀ TÌM KIẾM NÂNG CAO (ADVANCED SEARCH & FILTERS)
+co roi 6. BỘ LỌC VÀ TÌM KIẾM NÂNG CAO (ADVANCED SEARCH & FILTERS)
    - Bộ lọc giao dịch theo khoảng thời gian tùy chọn (từ ngày... đến ngày...) và khoảng số tiền (Min - Max).
 
 7. XÁC THỰC FIREBASE AUTH & ĐỒNG BỘ ĐA THIẾT BỊ (FIREBASE AUTH & MULTI-DEVICE SYNC)

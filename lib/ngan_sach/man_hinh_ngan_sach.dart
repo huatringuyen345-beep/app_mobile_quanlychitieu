@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../dich_vu/quan_ly_trang_thai_app.dart';
+import '../dich_vu/dich_vu_firebase.dart';
 import '../mo_hinh/mo_hinh_giao_dich.dart';
 import '../thien_ich/dinh_dang_tien.dart';
 
@@ -22,17 +23,46 @@ class _ManHinhNganSachState extends State<ManHinhNganSach> {
     '🎁 Hũ Cho Đi',
   ];
 
+  static const List<IconData> danhSachIcon = [
+    Icons.restaurant_rounded,
+    Icons.school_rounded,
+    Icons.savings_rounded,
+    Icons.movie_rounded,
+    Icons.trending_up_rounded,
+    Icons.card_giftcard_rounded,
+    Icons.home_rounded,
+    Icons.directions_bus_rounded,
+    Icons.shopping_bag_rounded,
+    Icons.favorite_rounded,
+    Icons.flight_rounded,
+    Icons.sports_esports_rounded,
+    Icons.local_hospital_rounded,
+    Icons.pets_rounded,
+  ];
+
+  static const List<Color> danhSachMau = [
+    Color(0xFFE07852),
+    Color(0xFF3B82F6),
+    Color(0xFF8B5CF6),
+    Color(0xFFEC4899),
+    Color(0xFFF59E0B),
+    Color(0xFF14B8A6),
+    Color(0xFFEF4444),
+    Color(0xFF84CC16),
+    Color(0xFF06B6D4),
+    Color(0xFF6366F1),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final quanLy = QuanLyTrangThaiScope.of(context);
-    final danhSachNganSach = quanLy.danhSachNganSach;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(
-          'Ngân sách & Hũ tài chính',
+          'Ngân sách & Cảnh báo Firebase',
           style: TextStyle(
             color: isDark ? Colors.white : const Color(0xFF1E232A),
             fontWeight: FontWeight.bold,
@@ -42,157 +72,270 @@ class _ManHinhNganSachState extends State<ManHinhNganSach> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: danhSachNganSach.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.savings_outlined,
-                    size: 64,
-                    color: isDark ? const Color(0xFF475569) : Colors.grey.shade400,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Chưa thiết lập hũ tài chính nào',
-                    style: TextStyle(
-                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey,
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: danhSachNganSach.length,
-              itemBuilder: (context, index) {
-                final item = danhSachNganSach[index];
-                final double tyLe = item.gioiHan > 0 ? (item.daDung / item.gioiHan) : 0.0;
-                final bool coNhanRieng = item.nhan.trim().isNotEmpty;
+      body: StreamBuilder<List<MoHinhNganSach>>(
+        stream: DichVuFirebase.luongNganSachStream,
+        initialData: quanLy.danhSachNganSach,
+        builder: (context, snapshot) {
+          final danhSachNganSach = snapshot.data ?? quanLy.danhSachNganSach;
+          final List<MoHinhNganSach> danhSachVuotNganSach = danhSachNganSach
+              .where((item) => item.gioiHan > 0 && (item.daDung / item.gioiHan) >= 0.8)
+              .toList();
+          final bool coCanhBaoDo = danhSachVuotNganSach.isNotEmpty;
 
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(16),
+          return Column(
+            children: [
+              // Banner cảnh báo thời gian thực màu đỏ khi vượt 80% hạn mức
+              if (coCanhBaoDo)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.88) : Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE8EAE5),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: item.mauSac.withValues(alpha: 0.15),
-                            child: Icon(item.icon, color: item.mauSac),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.tenHienThi,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    color: isDark ? Colors.white : const Color(0xFF1E232A),
-                                  ),
-                                ),
-                                if (coNhanRieng) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Danh mục: ${item.danhMuc}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          Text(
-                            '${(tyLe * 100).toInt()}%',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: tyLe > 0.9 ? Colors.red : mauChinh,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          IconButton(
-                            icon: Icon(
-                              Icons.edit_outlined,
-                              size: 20,
-                              color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            onPressed: () => _hienHopThoaiSoNganSach(
-                              context,
-                              quanLy,
-                              isDark,
-                              nganSachSua: item,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.delete_outline_rounded,
-                              size: 20,
-                              color: Colors.redAccent,
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            onPressed: () => _xacNhanXoaNganSach(
-                              context,
-                              quanLy,
-                              item,
-                              isDark,
-                            ),
-                          ),
-                        ],
+                    color: Colors.red.shade900.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withValues(alpha: 0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
-                      const SizedBox(height: 12),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: LinearProgressIndicator(
-                          value: tyLe.clamp(0.0, 1.0),
-                          minHeight: 10,
-                          backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFF0F1EE),
-                          color: tyLe > 0.9 ? Colors.red : mauChinh,
+                    ],
+                    border: Border.all(color: Colors.redAccent, width: 1.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Colors.redAccent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.warning_amber_rounded,
+                          color: Colors.white,
+                          size: 24,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Đã dùng: ${DinhDangTienInputFormatter.dinhDang(item.daDung)}',
-                            style: TextStyle(
-                              color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
-                              fontSize: 13,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '🚨 CẢNH BÁO MÀU ĐỎ THỜI GIAN THỰC!',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
-                          ),
-                          Text(
-                            'Hạn mức: ${DinhDangTienInputFormatter.dinhDang(item.gioiHan)}',
-                            style: TextStyle(
-                              color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
-                              fontSize: 13,
+                            const SizedBox(height: 2),
+                            Text(
+                              'Đã có ${danhSachVuotNganSach.length} danh mục chi tiêu vượt 80% hạn mức ngân sách!',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                );
-              },
-            ),
+                ),
+
+              Expanded(
+                child: danhSachNganSach.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.savings_outlined,
+                              size: 64,
+                              color: isDark ? const Color(0xFF475569) : Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Chưa thiết lập hũ ngân sách nào',
+                              style: TextStyle(
+                                color: isDark ? const Color(0xFF94A3B8) : Colors.grey,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(20),
+                        itemCount: danhSachNganSach.length,
+                        itemBuilder: (context, index) {
+                          final item = danhSachNganSach[index];
+                          final double tyLe = item.gioiHan > 0 ? (item.daDung / item.gioiHan) : 0.0;
+                          final bool coNhanRieng = item.nhan.trim().isNotEmpty;
+                          final bool vuotMoc80 = tyLe >= 0.8;
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.88) : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: vuotMoc80
+                                    ? Colors.redAccent
+                                    : (isDark ? const Color(0xFF334155) : const Color(0xFFE8EAE5)),
+                                width: vuotMoc80 ? 1.8 : 1.0,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: vuotMoc80
+                                          ? Colors.red.withValues(alpha: 0.2)
+                                          : item.mauSac.withValues(alpha: 0.15),
+                                      child: Icon(
+                                        item.icon,
+                                        color: vuotMoc80 ? Colors.redAccent : item.mauSac,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  item.tenHienThi,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                    color: isDark ? Colors.white : const Color(0xFF1E232A),
+                                                  ),
+                                                ),
+                                              ),
+                                              if (vuotMoc80)
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.redAccent,
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: const Text(
+                                                    'CẢNH BÁO >80%',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          if (coNhanRieng) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Danh mục: ${item.danhMuc}',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${(tyLe * 100).toInt()}%',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        color: vuotMoc80 ? Colors.redAccent : mauChinh,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.edit_outlined,
+                                        size: 20,
+                                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () => _hienHopThoaiSoNganSach(
+                                        context,
+                                        quanLy,
+                                        isDark,
+                                        nganSachSua: item,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete_outline_rounded,
+                                        size: 20,
+                                        color: Colors.redAccent,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () => _xacNhanXoaNganSach(
+                                        context,
+                                        quanLy,
+                                        item,
+                                        isDark,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: LinearProgressIndicator(
+                                    value: tyLe.clamp(0.0, 1.0),
+                                    minHeight: 10,
+                                    backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFF0F1EE),
+                                    color: vuotMoc80 ? Colors.redAccent : mauChinh,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Đã dùng: ${DinhDangTienInputFormatter.dinhDang(item.daDung)}',
+                                      style: TextStyle(
+                                        color: vuotMoc80
+                                            ? Colors.redAccent
+                                            : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700),
+                                        fontWeight: vuotMoc80 ? FontWeight.bold : FontWeight.normal,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Hạn mức: ${DinhDangTienInputFormatter.dinhDang(item.gioiHan)}',
+                                      style: TextStyle(
+                                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _hienHopThoaiSoNganSach(context, quanLy, isDark),
         backgroundColor: mauChinh,
@@ -206,11 +349,11 @@ class _ManHinhNganSachState extends State<ManHinhNganSach> {
   }
 
   void _hienHopThoaiSoNganSach(
-    BuildContext context,
-    QuanLyTrangThaiApp quanLy,
-    bool isDark, {
-    MoHinhNganSach? nganSachSua,
-  }) {
+      BuildContext context,
+      QuanLyTrangThaiApp quanLy,
+      bool isDark, {
+        MoHinhNganSach? nganSachSua,
+      }) {
     final bool isEdit = nganSachSua != null;
     final TextEditingController nhanController = TextEditingController(
       text: nganSachSua?.nhan ?? '',
@@ -225,10 +368,14 @@ class _ManHinhNganSachState extends State<ManHinhNganSach> {
 
     MoHinhDanhMuc danhMucChon = isEdit
         ? danhMucChiTieu.firstWhere(
-            (c) => c.tenDanhMuc == nganSachSua.danhMuc,
-            orElse: () => danhMucChiTieu.isNotEmpty ? danhMucChiTieu.first : quanLy.danhSachDanhMuc.first,
-          )
+          (c) => c.tenDanhMuc == nganSachSua.danhMuc,
+      orElse: () => danhMucChiTieu.isNotEmpty ? danhMucChiTieu.first : quanLy.danhSachDanhMuc.first,
+    )
         : (danhMucChiTieu.isNotEmpty ? danhMucChiTieu.first : quanLy.danhSachDanhMuc.first);
+
+    // Icon & màu tùy chọn cho hũ
+    IconData iconChon = isEdit ? nganSachSua.icon : danhMucChon.icon;
+    Color mauChon = isEdit ? nganSachSua.mauSac : danhMucChon.mauSac;
 
     showModalBottomSheet(
       context: context,
@@ -296,7 +443,13 @@ class _ManHinhNganSachState extends State<ManHinhNganSach> {
                       }).toList(),
                       onChanged: (val) {
                         if (val != null) {
-                          setModalState(() => danhMucChon = val);
+                          setModalState(() {
+                            danhMucChon = val;
+                            if (!isEdit) {
+                              iconChon = val.icon;
+                              mauChon = val.mauSac;
+                            }
+                          });
                         }
                       },
                     ),
@@ -386,6 +539,88 @@ class _ManHinhNganSachState extends State<ManHinhNganSach> {
                       ),
                     ),
 
+                    // Chọn biểu tượng
+                    const SizedBox(height: 16),
+                    Text(
+                      'Biểu tượng',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: danhSachIcon.map((ic) {
+                        final bool chon = ic.codePoint == iconChon.codePoint;
+                        return GestureDetector(
+                          onTap: () => setModalState(() => iconChon = ic),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: chon
+                                  ? mauChon.withValues(alpha: 0.2)
+                                  : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: chon ? mauChon : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                            child: Icon(
+                              ic,
+                              size: 22,
+                              color: chon
+                                  ? mauChon
+                                  : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+
+                    // Chọn màu sắc
+                    const SizedBox(height: 16),
+                    Text(
+                      'Màu sắc',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: danhSachMau.map((m) {
+                        final bool chon = m.toARGB32() == mauChon.toARGB32();
+                        return GestureDetector(
+                          onTap: () => setModalState(() => mauChon = m),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: m,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: chon
+                                    ? (isDark ? Colors.white : Colors.black87)
+                                    : Colors.transparent,
+                                width: 2.5,
+                              ),
+                            ),
+                            child: chon
+                                ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
+                                : null,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+
                     const SizedBox(height: 24),
 
                     // Nút Lưu
@@ -416,8 +651,8 @@ class _ManHinhNganSachState extends State<ManHinhNganSach> {
                             nhan: nhanController.text.trim(),
                             gioiHan: hanMuc,
                             daDung: isEdit ? nganSachSua.daDung : 0.0,
-                            icon: danhMucChon.icon,
-                            mauSac: danhMucChon.mauSac,
+                            icon: iconChon,
+                            mauSac: mauChon,
                           );
 
                           await quanLy.luuNganSach(ns);
@@ -462,11 +697,11 @@ class _ManHinhNganSachState extends State<ManHinhNganSach> {
   }
 
   void _xacNhanXoaNganSach(
-    BuildContext context,
-    QuanLyTrangThaiApp quanLy,
-    MoHinhNganSach item,
-    bool isDark,
-  ) {
+      BuildContext context,
+      QuanLyTrangThaiApp quanLy,
+      MoHinhNganSach item,
+      bool isDark,
+      ) {
     showDialog(
       context: context,
       builder: (ctx) {

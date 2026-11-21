@@ -150,37 +150,10 @@ class _ManHinhKhoiDauState extends State<ManHinhKhoiDau> with TickerProviderStat
 
                       const SizedBox(height: 20),
 
-                      // Hoạt ảnh Rive Loading
-                      SizedBox(
-                        width: 180,
-                        height: 140,
-                        child: RiveAnimation.asset(
-                          'lib/hoat-anh/loading-ride.riv',
-                          fit: BoxFit.contain,
-                          onInit: (artboard) {
-                            var controller = StateMachineController.fromArtboard(
-                              artboard,
-                              'State Machine 1',
-                            );
-                            if (controller != null) {
-                              artboard.addController(controller);
-                            } else {
-                              for (var animation in artboard.animations) {
-                                artboard.addController(SimpleAnimation(animation.name));
-                              }
-                            }
-                          },
-                          placeHolder: const Center(
-                            child: SizedBox(
-                              width: 28,
-                              height: 28,
-                              child: CircularProgressIndicator(
-                                color: mauRgbRive,
-                                strokeWidth: 2.8,
-                              ),
-                            ),
-                          ),
-                        ),
+                      // Hoạt ảnh Loading
+                      _KhuVucHoatAnhLoading(
+                        mauRgbRive: mauRgbRive,
+                        laGiaoDienToi: laGiaoDienToi,
                       ),
 
                       const SizedBox(height: 36),
@@ -364,6 +337,78 @@ class _DongXu extends StatelessWidget {
             fontWeight: FontWeight.w900,
             color: mauVien,
             height: 1.0,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _KhuVucHoatAnhLoading extends StatelessWidget {
+  final Color mauRgbRive;
+  final bool laGiaoDienToi;
+
+  const _KhuVucHoatAnhLoading({
+    required this.mauRgbRive,
+    required this.laGiaoDienToi,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 180,
+      height: 140,
+      child: Builder(
+        builder: (context) {
+          try {
+            return RiveAnimation.asset(
+              'lib/hoat-anh/loading-ride.riv',
+              fit: BoxFit.contain,
+              onInit: (artboard) {
+                try {
+                  var controller = StateMachineController.fromArtboard(
+                    artboard,
+                    'State Machine 1',
+                  );
+                  if (controller != null) {
+                    artboard.addController(controller);
+                  } else {
+                    for (var animation in artboard.animations) {
+                      artboard.addController(SimpleAnimation(animation.name));
+                    }
+                  }
+                } catch (_) {}
+              },
+              placeHolder: _buildFallback(),
+            );
+          } catch (_) {
+            return _buildFallback();
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildFallback() {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: laGiaoDienToi ? const Color(0xFF1E293B) : const Color(0xFFE0F2FE),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: mauRgbRive.withValues(alpha: 0.3),
+              blurRadius: 20,
+            ),
+          ],
+        ),
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: CircularProgressIndicator(
+            color: mauRgbRive,
+            strokeWidth: 3.2,
           ),
         ),
       ),

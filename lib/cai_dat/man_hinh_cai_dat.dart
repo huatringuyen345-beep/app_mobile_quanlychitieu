@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../dich_vu/quan_ly_trang_thai_app.dart';
-import '../dich_vu/dich_vu_luu_tru.dart';
+import '../dich_vu/dich_vu_csdl.dart';
 import '../dich_vu/dich_vu_thong_bao.dart';
+import '../thien_ich/dinh_dang_tien.dart';
 import '../thong_bao/man_hinh_cai_dat_thong_bao.dart';
 
 class ManHinhCaiDat extends StatefulWidget {
@@ -32,8 +33,8 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
   bool _vanTayBaoMat = true;
   bool _thongBao = true;
 
-  String _hoTen = 'HỨA TRÍ NGUYÊN';
-  String _email = 'huatringuyen345@gmail.com';
+  String _hoTen = 'Khách hàng';
+  String _email = 'Chưa đăng nhập';
 
   static const Color mauChinh = Color(0xFFE07852);
 
@@ -44,18 +45,139 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
     _taiThongTinNguoiDung();
   }
 
+  @override
+  void didUpdateWidget(covariant ManHinhCaiDat oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.laGiaoDienToi != widget.laGiaoDienToi) {
+      setState(() {
+        _giaoDienToi = widget.laGiaoDienToi;
+      });
+    }
+  }
+
   Future<void> _taiThongTinNguoiDung() async {
-    final thongTin = await DichVuLuuTru.layThongTinNguoiDung();
-    final isDark = await DichVuLuuTru.layGiaoDienToi();
+    final thongTin = await DichVuCSDL.layThongTinNguoiDung();
+    final isDark = await DichVuCSDL.layGiaoDienToi();
     final isNotify = await DichVuThongBao().layChoPhepThongBao();
     if (mounted) {
       setState(() {
-        _hoTen = thongTin['hoTen'] ?? 'HỨA TRÍ NGUYÊN';
-        _email = thongTin['email'] ?? 'huatringuyen345@gmail.com';
+        _hoTen = thongTin['hoTen'] ?? 'Khách hàng';
+        _email = thongTin['email'] ?? 'Chưa đăng nhập';
         _giaoDienToi = isDark;
         _thongBao = isNotify;
       });
     }
+  }
+
+  void _hienHopThoaiSoDuBanDau(BuildContext context, bool isDark) {
+    final quanLy = QuanLyTrangThaiScope.of(context);
+    final controller = TextEditingController(
+      text: DinhDangTienInputFormatter.dinhDang(quanLy.soDuBanDau),
+    );
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          title: Text(
+            'Quản lý số dư ban đầu',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: isDark ? Colors.white : const Color(0xFF1E232A),
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Nhập số tiền vốn ban đầu của bạn trước khi ghi chép thu chi:',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                keyboardType: const TextInputType.numberWithOptions(decimal: false, signed: false),
+                inputFormatters: [DinhDangTienInputFormatter()],
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Số dư ban đầu (VNĐ)',
+                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF7F8F4),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actionsPadding: const EdgeInsets.all(20),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: Text(
+                      'Hủy',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF1E232A),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final double? val = DinhDangTienInputFormatter.giaiMaSoTien(controller.text);
+                      if (val != null) {
+                        await quanLy.capNhatSoDuBanDau(val);
+                      }
+                      if (dialogContext.mounted) {
+                        Navigator.pop(dialogContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Đã cập nhật số dư ban đầu thành công!'),
+                            backgroundColor: mauChinh,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: mauChinh,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: const Text(
+                      'Lưu',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _hienHopThoaiXacNhanDangXuat() {
@@ -121,7 +243,7 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
                     child: ElevatedButton(
                       onPressed: () async {
                         Navigator.pop(dialogContext);
-                        await DichVuLuuTru.xoaDangXuat();
+                        await DichVuCSDL.xoaDangXuat();
                         // Xóa sạch dữ liệu đang hiển thị: người sau đăng nhập sẽ thấy 0đ
                         if (mounted) {
                           await QuanLyTrangThaiScope.of(context).dangXuat();
@@ -167,12 +289,24 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final quanLy = QuanLyTrangThaiScope.of(context);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Cài đặt & Tài khoản'),
+        title: Text(
+          'Cài đặt & Tài khoản',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF1E232A),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : const Color(0xFF1E232A),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -230,7 +364,7 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
 
             // Quản lý
             Text(
-              'Quản lý dữ liệu',
+              'Quản lý dữ liệu & Số dư',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -248,6 +382,15 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
               child: Column(
                 children: [
                   _taoMucCaiDat(
+                    icon: Icons.monetization_on_rounded,
+                    mauIcon: Colors.green,
+                    tieuDe: 'Quản lý số dư ban đầu',
+                    moTa: 'Hiện tại: ${DinhDangTienInputFormatter.dinhDang(quanLy.soDuBanDau)}',
+                    onTap: () => _hienHopThoaiSoDuBanDau(context, isDark),
+                    isDark: isDark,
+                  ),
+                  Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? const Color(0xFF334155) : null),
+                  _taoMucCaiDat(
                     icon: Icons.category_rounded,
                     mauIcon: Colors.orange,
                     tieuDe: 'Quản lý danh mục',
@@ -262,6 +405,25 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
                     tieuDe: 'Quản lý ngân sách',
                     moTa: 'Đặt hạn mức chi tiêu hàng tháng',
                     onTap: widget.chuyenToiNganSach,
+                    isDark: isDark,
+                  ),
+                  Divider(height: 1, indent: 56, endIndent: 16, color: isDark ? const Color(0xFF334155) : null),
+                  _taoMucCaiDat(
+                    icon: Icons.play_circle_fill_rounded,
+                    mauIcon: Colors.purple,
+                    tieuDe: 'Nạp kịch bản Demo (Minh NVKD)',
+                    moTa: 'Nạp dữ liệu mẫu Lương 16,2Tr, 6 Hũ & Giao dịch',
+                    onTap: () async {
+                      await quanLy.datLaiDuLieuKichBanDemoMinh();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Đã nạp thành công dữ liệu kịch bản Demo (Minh NVKD)!'),
+                            backgroundColor: mauChinh,
+                          ),
+                        );
+                      }
+                    },
                     isDark: isDark,
                   ),
                 ],
@@ -298,7 +460,7 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
                       setState(() {
                         _giaoDienToi = val;
                       });
-                      await DichVuLuuTru.luuGiaoDienToi(val);
+                      await DichVuCSDL.luuGiaoDienToi(val);
                       if (widget.khiDoiGiaoDienToi != null) {
                         widget.khiDoiGiaoDienToi!(val);
                       }
@@ -367,8 +529,8 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
                   _taoMucCaiDat(
                     icon: Icons.cloud_upload_rounded,
                     mauIcon: Colors.cyan,
-                    tieuDe: 'Sao lưu & Phục hồi',
-                    moTa: 'Đồng bộ dữ liệu lên đám mây',
+                    tieuDe: 'Sao lưu & Phục hồi (Firebase)',
+                    moTa: 'Đồng bộ dữ liệu thời gian thực',
                     onTap: () {},
                     isDark: isDark,
                   ),
@@ -377,7 +539,7 @@ class _ManHinhCaiDatState extends State<ManHinhCaiDat> {
                     icon: Icons.info_outline_rounded,
                     mauIcon: Colors.purple,
                     tieuDe: 'Thông tin ứng dụng',
-                    moTa: 'Phiên bản 1.0.0',
+                    moTa: 'Phiên bản 1.0.0 (SQLite & Firebase)',
                     onTap: () {},
                     isDark: isDark,
                   ),

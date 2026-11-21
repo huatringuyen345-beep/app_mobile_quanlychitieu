@@ -128,8 +128,19 @@ class _ManHinhCaiDatThongBaoState extends State<ManHinhCaiDatThongBao> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Cài đặt & Lịch thông báo'),
+        title: Text(
+          'Cài đặt & Lịch thông báo',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF1E232A),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : const Color(0xFF1E232A),
+        ),
       ),
       body: _dangTai
           ? const Center(child: CircularProgressIndicator(color: mauChinh))

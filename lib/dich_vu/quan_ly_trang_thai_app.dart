@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import '../mo_hinh/mo_hinh_giao_dich.dart';
 import 'dich_vu_csdl.dart';
-import 'dich_vu_luu_tru.dart';
 import 'dich_vu_firebase.dart';
 
 class QuanLyTrangThaiApp extends ChangeNotifier {
   List<MoHinhGiaoDich> _danhSachGiaoDich = [];
   List<MoHinhDanhMuc> _danhSachDanhMuc = [];
   List<MoHinhNganSach> _danhSachNganSach = [];
+  double _soDuBanDau = 0.0;
   bool _dangTai = true;
 
   List<MoHinhGiaoDich> get danhSachGiaoDich => List.unmodifiable(_danhSachGiaoDich);
   List<MoHinhDanhMuc> get danhSachDanhMuc => List.unmodifiable(_danhSachDanhMuc);
   List<MoHinhNganSach> get danhSachNganSach => List.unmodifiable(_danhSachNganSach);
+  double get soDuBanDau => _soDuBanDau;
   bool get dangTai => _dangTai;
 
   double get tongThuNhap {
@@ -27,16 +28,17 @@ class QuanLyTrangThaiApp extends ChangeNotifier {
         .fold(0.0, (sum, item) => sum + item.soTien);
   }
 
-  double get tongSoDu => tongThuNhap - tongChiTieu;
+  /// Tổng số dư = Số dư ban đầu + Tổng thu nhập - Tổng chi tiêu
+  double get tongSoDu => _soDuBanDau + tongThuNhap - tongChiTieu;
 
   QuanLyTrangThaiApp() {
     _khoiTao();
   }
 
   Future<void> _khoiTao() async {
-    final emailHienTai = await DichVuLuuTru.layNguoiDungHienTai();
+    final emailHienTai = await DichVuCSDL.layNguoiDungHienTai();
     await DichVuCSDL.datNguoiDung(emailHienTai);
-    DichVuFirebase.datNguoiDung(emailHienTai);
+    await DichVuFirebase.datNguoiDung(emailHienTai);
     await taiDuLieuTuCSDL();
   }
 
@@ -49,24 +51,34 @@ class QuanLyTrangThaiApp extends ChangeNotifier {
     _danhSachGiaoDich = [];
     _danhSachDanhMuc = [];
     _danhSachNganSach = [];
+    _soDuBanDau = 0.0;
     notifyListeners();
-    await DichVuLuuTru.luuNguoiDungHienTai(e);
+    await DichVuCSDL.luuNguoiDungHienTai(e);
     await DichVuCSDL.datNguoiDung(e);
-    DichVuFirebase.datNguoiDung(e);
+    await DichVuFirebase.datNguoiDung(e);
     await taiDuLieuTuCSDL();
   }
 
   /// Gọi khi đăng xuất: về trạng thái khách, dữ liệu người trước biến mất khỏi app.
   Future<void> dangXuat() => chuyenNguoiDung(null);
 
+  /// Khôi phục nạp lại dữ liệu kịch bản Demo nhân vật Minh
+  Future<void> datLaiDuLieuKichBanDemoMinh() async {
+    await DichVuCSDL.datLaiDuLieuKichBanDemoMinh();
+    await taiDuLieuTuCSDL();
+  }
+
   Future<void> taiDuLieuTuCSDL() async {
     _dangTai = true;
     notifyListeners();
-
+    for (final g in _danhSachGiaoDich) { await DichVuFirebase.dongBoGiaoDich(g); }
+    for (final c in _danhSachDanhMuc) { await DichVuFirebase.dongBoDanhMuc(c); }
+    for (final n in _danhSachNganSach) { await DichVuFirebase.dongBoNganSach(n); }
     try {
       _danhSachGiaoDich = await DichVuCSDL.layTatCaGiaoDich();
       _danhSachDanhMuc = await DichVuCSDL.layTatCaDanhMuc();
       _danhSachNganSach = await DichVuCSDL.layTatCaNganSach();
+      _soDuBanDau = await DichVuCSDL.laySoDuBanDau();
 
       if (_danhSachDanhMuc.isEmpty) {
         _danhSachDanhMuc = List.from(DuLieuMau.danhSachDanhMuc);
@@ -91,6 +103,12 @@ class QuanLyTrangThaiApp extends ChangeNotifier {
     }
   }
 
+  Future<void> capNhatSoDuBanDau(double soTien) async {
+    _soDuBanDau = soTien;
+    await DichVuFirebase.datSoDuBanDau(soTien);
+    notifyListeners();
+  }
+
   void _capNhatDaDungChoNganSach() {
     final Map<String, double> tongChiTheoDanhMuc = {};
     for (var tx in _danhSachGiaoDich) {
@@ -104,6 +122,8 @@ class QuanLyTrangThaiApp extends ChangeNotifier {
       final daDungMoi = tongChiTheoDanhMuc[ns.danhMuc] ?? 0.0;
       return ns.copyWith(daDung: daDungMoi);
     }).toList();
+
+    DichVuFirebase.phatCapNhatNganSach(_danhSachNganSach);
   }
 
   Future<void> themGiaoDich(MoHinhGiaoDich tx) async {

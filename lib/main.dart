@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'cot_loi/giao_dien/giao_dien_app.dart';
 import 'cot_loi/giao_dien/khung_nen_app.dart';
-import 'dich_vu/dich_vu_luu_tru.dart';
+import 'dich_vu/dich_vu_csdl.dart';
 import 'dich_vu/dich_vu_thong_bao.dart';
 import 'dich_vu/quan_ly_trang_thai_app.dart';
 import 'mo_hinh/mo_hinh_giao_dich.dart';
@@ -45,7 +45,16 @@ class _ExpenseAppState extends State<ExpenseApp> {
   }
 
   Future<void> _taiCauHinhGiaoDien() async {
-    final isDark = await DichVuLuuTru.layGiaoDienToi();
+    final isDark = await DichVuCSDL.layGiaoDienToi();
+    final daDangNhap = await DichVuCSDL.kiemTraDangNhap();
+    final email = await DichVuCSDL.layNguoiDungHienTai();
+
+    if (daDangNhap && email != null && email.isNotEmpty) {
+      await _quanLyTrangThai.chuyenNguoiDung(email);
+    } else {
+      await _quanLyTrangThai.dangXuat();
+    }
+
     if (mounted) {
       setState(() {
         _isDarkMode = isDark;
@@ -193,6 +202,7 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
             },
             dangXuat: () {
               setState(() {
+                _viTriTab = 0;
                 _viTriManHinhDocLap = 10; // Chuyển sang màn hình Đăng nhập
               });
             },
@@ -311,7 +321,10 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
           chuyenToiDanhMuc: () => setState(() => _viTriManHinhDocLap = 6),
           chuyenToiNganSach: () => setState(() => _viTriManHinhDocLap = 7),
           chuyenToiThongBao: () => setState(() => _viTriManHinhDocLap = 11),
-          dangXuat: () => setState(() => _viTriManHinhDocLap = 10),
+          dangXuat: () => setState(() {
+            _viTriTab = 0;
+            _viTriManHinhDocLap = 10;
+          }),
         );
       case 9:
         return ManHinhDangKy(

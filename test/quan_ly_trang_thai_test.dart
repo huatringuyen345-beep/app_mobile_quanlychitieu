@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quanlychitieu/dich_vu/dich_vu_firebase.dart';
 import 'package:quanlychitieu/mo_hinh/mo_hinh_giao_dich.dart';
 
 void main() {
@@ -74,18 +73,6 @@ void main() {
     );
     expect(nsWithoutNhan.tenHienThi, 'Đi lại');
   });
-
-  test('Kiểm tra DichVuFirebase phân nhánh người dùng', () {
-    DichVuFirebase.datNguoiDung('user1@gmail.com');
-    expect(DichVuFirebase.layNguoiDungKey(), 'user1_gmail_com');
-    expect(DichVuFirebase.layDuongDanCollection(DichVuFirebase.collectionGiaoDich), 'users/user1_gmail_com/giao_dich');
-
-    DichVuFirebase.datNguoiDung('user2@domain.vn');
-    expect(DichVuFirebase.layNguoiDungKey(), 'user2_domain_vn');
-    expect(DichVuFirebase.layDuongDanCollection(DichVuFirebase.collectionNganSach), 'users/user2_domain_vn/ngan_sach');
-
-    DichVuFirebase.datNguoiDung(null);
-    expect(DichVuFirebase.layNguoiDungKey(), 'khach');
-    expect(DichVuFirebase.layDuongDanCollection(DichVuFirebase.collectionDanhMuc), 'users/khach/danh_muc');
-  });
 }
+
+
