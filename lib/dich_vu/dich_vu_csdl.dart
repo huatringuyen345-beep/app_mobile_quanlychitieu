@@ -170,16 +170,26 @@ class DichVuCSDL {
             giaTri TEXT NOT NULL
           )
         ''');
-
-        // Tài khoản mới: Khởi tạo danh mục & ngân sách mẫu
-        for (var cat in DuLieuMau.danhSachDanhMuc) {
-          await db.insert('danh_muc', cat.toMap());
-        }
-        for (var ns in DuLieuMau.danhSachNganSach) {
-          await db.insert('ngan_sach', ns.toMap());
-        }
       },
     );
+  }
+
+  static Future<void> xoaToanBoDuLieu() async {
+    await luuSoDuBanDau(0.0);
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_keyWeb('giao_dich'));
+      await prefs.remove(_keyWeb('danh_muc'));
+      await prefs.remove(_keyWeb('ngan_sach'));
+      await prefs.remove(_keyWeb('cfg_so_du_ban_dau'));
+      await prefs.remove(_keyWeb('cfg_ty_le_hu'));
+      return;
+    }
+    final db = await database;
+    await db.delete('giao_dich');
+    await db.delete('danh_muc');
+    await db.delete('ngan_sach');
+    await db.delete('cau_hinh');
   }
 
   static Future<void> datLaiDuLieuKichBanDemoMinh() async {
@@ -343,9 +353,7 @@ class DichVuCSDL {
     final prefs = await SharedPreferences.getInstance();
     final str = prefs.getString(_keyWeb('giao_dich'));
     if (str == null || str.isEmpty) {
-      final initial = DuLieuMau.danhSachGiaoDich;
-      await _luuGiaoDichWeb(initial);
-      return initial;
+      return [];
     }
     final List dynamicList = jsonDecode(str);
     return dynamicList.map((m) => MoHinhGiaoDich.fromMap(Map<String, dynamic>.from(m))).toList();
@@ -361,9 +369,7 @@ class DichVuCSDL {
     final prefs = await SharedPreferences.getInstance();
     final str = prefs.getString(_keyWeb('danh_muc'));
     if (str == null || str.isEmpty) {
-      final initial = DuLieuMau.danhSachDanhMuc;
-      await _luuDanhMucWeb(initial);
-      return initial;
+      return [];
     }
     final List dynamicList = jsonDecode(str);
     return dynamicList.map((m) => MoHinhDanhMuc.fromMap(Map<String, dynamic>.from(m))).toList();
@@ -379,9 +385,7 @@ class DichVuCSDL {
     final prefs = await SharedPreferences.getInstance();
     final str = prefs.getString(_keyWeb('ngan_sach'));
     if (str == null || str.isEmpty) {
-      final initial = DuLieuMau.danhSachNganSach;
-      await _luuNganSachWeb(initial);
-      return initial;
+      return [];
     }
     final List dynamicList = jsonDecode(str);
     return dynamicList.map((m) => MoHinhNganSach.fromMap(Map<String, dynamic>.from(m))).toList();

@@ -59,8 +59,21 @@ class QuanLyTrangThaiApp extends ChangeNotifier {
     await taiDuLieuTuCSDL();
   }
 
-  /// Gọi khi đăng xuất: về trạng thái khách, dữ liệu người trước biến mất khỏi app.
-  Future<void> dangXuat() => chuyenNguoiDung(null);
+  /// Làm sạch toàn bộ dữ liệu hiện tại về 0 (Xóa sạch bộ nhớ & CSDL)
+  Future<void> xoaToanBoDuLieu() async {
+    await DichVuCSDL.xoaToanBoDuLieu();
+    _danhSachGiaoDich = [];
+    _danhSachDanhMuc = [];
+    _danhSachNganSach = [];
+    _soDuBanDau = 0.0;
+    notifyListeners();
+  }
+
+  /// Gọi khi đăng xuất: làm sạch bộ nhớ và CSDL, về trạng thái 0đ.
+  Future<void> dangXuat() async {
+    await xoaToanBoDuLieu();
+    await chuyenNguoiDung(null);
+  }
 
   /// Khôi phục nạp lại dữ liệu kịch bản Demo nhân vật Minh
   Future<void> datLaiDuLieuKichBanDemoMinh() async {
@@ -84,13 +97,6 @@ class QuanLyTrangThaiApp extends ChangeNotifier {
         _danhSachDanhMuc = List.from(DuLieuMau.danhSachDanhMuc);
         for (var c in _danhSachDanhMuc) {
           await DichVuCSDL.themDanhMuc(c);
-        }
-      }
-
-      if (_danhSachNganSach.isEmpty) {
-        _danhSachNganSach = List.from(DuLieuMau.danhSachNganSach);
-        for (var ns in _danhSachNganSach) {
-          await DichVuCSDL.luuNganSach(ns);
         }
       }
 

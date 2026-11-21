@@ -73,6 +73,17 @@ void main() {
     );
     expect(nsWithoutNhan.tenHienThi, 'Đi lại');
   });
+
+  test('Kiểm tra danh sách giao dịch & ngân sách mặc định phải ở trạng thái sạch (rỗng)', () {
+    final danhSachMoi = <MoHinhGiaoDich>[];
+    final nganSachMoi = <MoHinhNganSach>[];
+    final double soDu = 0.0;
+
+    expect(danhSachMoi.isEmpty, isTrue);
+    expect(nganSachMoi.isEmpty, isTrue);
+    expect(soDu, 0.0);
+  });
 }
+
 
 

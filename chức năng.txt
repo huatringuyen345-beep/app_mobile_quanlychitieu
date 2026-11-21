@@ -98,14 +98,11 @@ II. CÁC CHỨC NĂNG CẦN PHÁT TRIỂN TIẾP THEO (ROADMAP)
 5. XUẤT BÁO CÁO TÀI CHÍNH (EXPORT REPORTS TO EXCEL/PDF)
    - Cho phép xuất lịch sử giao dịch và báo cáo thống kê ra tập tin Excel (XLSX), CSV hoặc tập tin PDF.
 
-co roi 6. BỘ LỌC VÀ TÌM KIẾM NÂNG CAO (ADVANCED SEARCH & FILTERS)
-   - Bộ lọc giao dịch theo khoảng thời gian tùy chọn (từ ngày... đến ngày...) và khoảng số tiền (Min - Max).
-
-7. XÁC THỰC FIREBASE AUTH & ĐỒNG BỘ ĐA THIẾT BỊ (FIREBASE AUTH & MULTI-DEVICE SYNC)
+6. XÁC THỰC FIREBASE AUTH & ĐỒNG BỘ ĐA THIẾT BỊ (FIREBASE AUTH & MULTI-DEVICE SYNC)
    - Tích hợp `firebase_auth` cho phép đăng nhập bằng Google / OTP Điện thoại thực tế và đồng bộ dữ liệu Realtime Database đa thiết bị.
 
-8. QUÉT HÓA ĐƠN THÔNG MINH (OCR INVOICE SCANNING)
+7. QUÉT HÓA ĐƠN THÔNG MINH (OCR INVOICE SCANNING)
    - Tích hợp camera quét hóa đơn mua sắm bằng trí tuệ nhân tạo (OCR) để tự động điền số tiền, ngày tháng và tên cửa hàng.
 
-9. TIỆN ÍCH WIDGET TRÊN MÀN HÌNH CHÍNH (HOMESCREEN WIDGETS)
+8. TIỆN ÍCH WIDGET TRÊN MÀN HÌNH CHÍNH (HOMESCREEN WIDGETS)
    - Cung cấp Widget màn hình chính trên Android/iOS để xem nhanh số dư và nút thêm nhanh giao dịch mà không cần mở ứng dụng.

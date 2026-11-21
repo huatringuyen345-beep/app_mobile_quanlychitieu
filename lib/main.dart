@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'dich_vu/firebase_options.dart';
 import 'cot_loi/giao_dien/giao_dien_app.dart';
 import 'cot_loi/giao_dien/khung_nen_app.dart';
 import 'dich_vu/dich_vu_csdl.dart';
@@ -19,7 +21,11 @@ import 'thong_bao/man_hinh_cai_dat_thong_bao.dart';
 import 'log in/dang_ky.dart';
 import 'log in/dang_nhap.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const ExpenseApp());
 }
 
@@ -80,17 +86,17 @@ class _ExpenseAppState extends State<ExpenseApp> {
         themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
         home: _daHoanThanhKhoiDau
             ? DieuHuongChinh(
-                isDarkMode: _isDarkMode,
-                onToggleDarkMode: _doiGiaoDienToi,
-              )
+          isDarkMode: _isDarkMode,
+          onToggleDarkMode: _doiGiaoDienToi,
+        )
             : ManHinhKhoiDau(
-                thoiGianChoGiay: 10,
-                khiHoanThanh: () {
-                  setState(() {
-                    _daHoanThanhKhoiDau = true;
-                  });
-                },
-              ),
+          thoiGianChoGiay: 10,
+          khiHoanThanh: () {
+            setState(() {
+              _daHoanThanhKhoiDau = true;
+            });
+          },
+        ),
       ),
     );
   }
@@ -113,7 +119,7 @@ class DieuHuongChinh extends StatefulWidget {
 class _DieuHuongChinhState extends State<DieuHuongChinh> {
   int _viTriTab = 0;
   MoHinhGiaoDich? _giaoDichDuocChon;
-  int _viTriManHinhDocLap = -1; // -1 la che do xem toan bo app
+  int _viTriManHinhDocLap = -1;
 
   final List<String> _tenCacManHinh = [
     '0. Màn hình khởi đầu (Loading 10s)',
@@ -140,7 +146,6 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
       switch (_viTriTab) {
         case 0:
           noiDung = ManHinhTrangChu(
-        //noiDung = ManHinhSauHu(
             chuyenToiDanhSachGiaoDich: () {
               setState(() {
                 _viTriTab = 1;
@@ -203,7 +208,7 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
             dangXuat: () {
               setState(() {
                 _viTriTab = 0;
-                _viTriManHinhDocLap = 10; // Chuyển sang màn hình Đăng nhập
+                _viTriManHinhDocLap = 10;
               });
             },
           );
@@ -224,8 +229,12 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
             child: DropdownButton<int>(
               value: _viTriManHinhDocLap,
               dropdownColor: const Color(0xFFB8532F),
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-              icon: const Icon(Icons.arrow_drop_down_rounded, color: Colors.white),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold),
+              icon: const Icon(Icons.arrow_drop_down_rounded,
+                  color: Colors.white),
               items: [
                 const DropdownMenuItem<int>(
                   value: -1,
@@ -255,21 +264,23 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
                     _viTriManHinhDocLap = -1;
                   });
                 },
-                icon: const Icon(Icons.arrow_back_rounded, size: 16, color: Colors.white),
-                label: const Text('Quay lại', style: TextStyle(color: Colors.white, fontSize: 12)),
+                icon: const Icon(Icons.arrow_back_rounded,
+                    size: 16, color: Colors.white),
+                label: const Text('Quay lại',
+                    style: TextStyle(color: Colors.white, fontSize: 12)),
               ),
           ],
         ),
         body: noiDung,
         bottomNavigationBar: _viTriManHinhDocLap == -1
             ? ThanhDieuHuongDuoi(
-                viTriHienTai: _viTriTab,
-                khiChon: (index) {
-                  setState(() {
-                    _viTriTab = index;
-                  });
-                },
-              )
+          viTriHienTai: _viTriTab,
+          khiChon: (index) {
+            setState(() {
+              _viTriTab = index;
+            });
+          },
+        )
             : null,
       ),
     );
@@ -279,14 +290,15 @@ class _DieuHuongChinhState extends State<DieuHuongChinh> {
     switch (index) {
       case 0:
         return ManHinhKhoiDau(
-        //return ManHinhSauHu(
           thoiGianChoGiay: 10,
           khiHoanThanh: () => setState(() => _viTriManHinhDocLap = -1),
         );
       case 1:
         return ManHinhTrangChu(
-          chuyenToiDanhSachGiaoDich: () => setState(() => _viTriManHinhDocLap = 2),
-          chuyenToiThemGiaoDich: () => setState(() => _viTriManHinhDocLap = 3),
+          chuyenToiDanhSachGiaoDich: () =>
+              setState(() => _viTriManHinhDocLap = 2),
+          chuyenToiThemGiaoDich: () =>
+              setState(() => _viTriManHinhDocLap = 3),
           chonGiaoDich: (tx) => setState(() {
             _giaoDichDuocChon = tx;
             _viTriManHinhDocLap = 4;
